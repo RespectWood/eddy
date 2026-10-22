@@ -40,7 +40,7 @@ To start over with a clean first run: quit openstream from its menu, then run
 | A2 | Same launch | The setup window opens and comes to the front | |
 | A3 | Check the icon in light and dark mode (System Settings → Appearance) | Icon is legible in both | |
 | A4 | Open the app a second time from Finder while it's running | Still **one** menu bar icon. The setup window comes to the front | |
-| A5 | Click the menu bar icon | Menu shows: status line, "Not active: set up openstream…", Pause, Recent Conversions, Preferred Service, Open Other Links In, Launch at Login, Settings…, About, Quit | |
+| A5 | Click the menu bar icon | Menu shows: status line, "Not active: set up openstream…", Disable openstream, Recent Conversions, Preferred Service, Open Other Links In, Launch at Login, Settings…, About, Quit | |
 
 ## B. Setup and default link handler
 
@@ -143,8 +143,8 @@ Click a Spotify track link in each app and note whether openstream converts it:
 
 | # | Do this | Expected | Result |
 |---|---|---|---|
-| H1 | Menu → Pause | Icon changes to ⏸. Spotify links now open in Firefox unchanged | |
-| H2 | Menu → Resume | Conversion works again | |
+| H1 | Menu → Disable openstream | Icon changes to ⃠, status says "Disabled: links open as usual". Spotify links now open in Firefox unchanged, no autoplay | |
+| H2 | Menu → Enable openstream | Conversion works again | |
 | H3 | Menu → Preferred Service → switch | Next Spotify link goes to the new service | |
 | H4 | Menu → About | About panel with name and version 0.1.0 | |
 | H5 | Menu → Quit | Icon disappears. **Note:** links then fail to open until openstream runs again or the default browser is changed back (expected for v0.1) | |

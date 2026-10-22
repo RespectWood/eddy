@@ -11,7 +11,7 @@ struct MenuBarIcon: View {
     }
 
     private var symbol: String {
-        if model.isPaused { return "pause.circle" }
+        if model.isDisabled { return "nosign" }
         if model.service == nil || !model.isDefaultHandler { return "exclamationmark.circle" }
         return "music.note"
     }
@@ -29,7 +29,7 @@ struct MenuContent: View {
         }
         Divider()
 
-        Button(model.isPaused ? "Resume" : "Pause") { model.isPaused.toggle() }
+        Button(model.isDisabled ? "Enable openstream" : "Disable openstream") { model.isDisabled.toggle() }
             .keyboardShortcut("p")
 
         Menu("Recent Conversions") {

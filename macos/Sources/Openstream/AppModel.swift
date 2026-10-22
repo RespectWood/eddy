@@ -9,7 +9,8 @@ let log = Logger(subsystem: "app.openstream.mac", category: "router")
 final class AppModel: ObservableObject {
     @Published var service: Service? { didSet { defaults.set(service?.key, forKey: Keys.service) } }
     @Published var browserBundleID: String? { didSet { defaults.set(browserBundleID, forKey: Keys.browser) } }
-    @Published var isPaused: Bool { didSet { defaults.set(isPaused, forKey: Keys.paused) } }
+    /// Disabled: openstream leaves every link alone (Spotify links open as usual).
+    @Published var isDisabled: Bool { didSet { defaults.set(isDisabled, forKey: Keys.disabled) } }
     @Published var hasCompletedOnboarding: Bool { didSet { defaults.set(hasCompletedOnboarding, forKey: Keys.onboarded) } }
     @Published var tidalClientID: String { didSet { defaults.set(tidalClientID, forKey: Keys.tidalID); resetResolver() } }
     @Published var tidalClientSecret: String { didSet { defaults.set(tidalClientSecret, forKey: Keys.tidalSecret); resetResolver() } }
@@ -30,7 +31,7 @@ final class AppModel: ObservableObject {
     private enum Keys {
         static let service = "service"
         static let browser = "browserBundleID"
-        static let paused = "paused"
+        static let disabled = "disabled"
         static let onboarded = "hasCompletedOnboarding"
         static let tidalID = "tidalClientID"
         static let tidalSecret = "tidalClientSecret"
@@ -42,7 +43,7 @@ final class AppModel: ObservableObject {
     init() {
         service = defaults.string(forKey: Keys.service).flatMap(Service.init(key:))
         browserBundleID = defaults.string(forKey: Keys.browser)
-        isPaused = defaults.bool(forKey: Keys.paused)
+        isDisabled = defaults.bool(forKey: Keys.disabled)
         hasCompletedOnboarding = defaults.bool(forKey: Keys.onboarded)
         tidalClientID = defaults.string(forKey: Keys.tidalID) ?? ""
         tidalClientSecret = defaults.string(forKey: Keys.tidalSecret) ?? ""
@@ -62,7 +63,7 @@ final class AppModel: ObservableObject {
     var statusLine: String {
         guard let service else { return "Not set up" }
         if !isDefaultHandler { return "Not active" }
-        return isPaused ? "Paused" : "Active: Spotify → \(service.displayName)"
+        return isDisabled ? "Disabled: links open as usual" : "Active: Spotify → \(service.displayName)"
     }
 
     func refreshDefaultHandlerStatus() {
@@ -76,7 +77,7 @@ final class AppModel: ObservableObject {
             DebugCommands.handle(url)
             return
         }
-        if url.isFileURL || isPaused || service == nil {
+        if url.isFileURL || isDisabled || service == nil {
             passThrough(url)
             return
         }

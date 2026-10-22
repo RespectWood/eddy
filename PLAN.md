@@ -181,7 +181,7 @@ Supporting points, in order of strength:
 | Risk | Impact | Mitigation |
 |---|---|---|
 | Users don't trust a "default browser" app | Adoption | Open source, local-only URL inspection, clear privacy statement, menu bar log of what was intercepted |
-| Breaking normal browsing (slow or failed forwarding) | Very bad UX, uninstall | Forward non-music URLs immediately without network calls. Thorough testing. "Pause openstream" toggle |
+| Breaking normal browsing (slow or failed forwarding) | Very bad UX, uninstall | Forward non-music URLs immediately without network calls. Thorough testing. "Disable openstream" toggle |
 | API access changes (Spotify especially) | Resolution breaks | Several layered resolvers, ISRC cache, Odesli fallback, metadata scraping fallback |
 | Permissions look scary: openstream is the default link handler **and** (with autoplay) has Accessibility | Trust, installs | Autoplay is opt-in, so without it openstream never asks for Accessibility. AX is used only on Tidal/Music right after a converted link. Open source; links handled locally. Ship signed with Developer ID and notarized (like Discord/Zoom), not via the App Store (sandboxed apps can't use Accessibility) |
 | Autoplay depends on the target apps' UI (CSS class names, identifiers) | Autoplay breaks after app updates | Prefix matching, verification step, debug dump to fix quickly; core conversion keeps working without it |
@@ -240,10 +240,10 @@ When openstream is opened, it **adds an icon to the macOS top menu bar** (the st
 
 - Built with SwiftUI `MenuBarExtra` (macOS 13+) and `LSUIElement = YES`, so the app has no Dock icon and doesn't show in the Cmd-Tab app switcher.
 - The icon appears **as soon as the app launches**, whether started by hand, by the first-run onboarding or by launch at login. It stays until the user quits from the menu.
-- Icon: a monochrome template image, so macOS tints it correctly in light and dark mode. When openstream is paused, the icon shows a dimmed or crossed-out state.
+- Icon: a monochrome template image, so macOS tints it correctly in light and dark mode. When openstream is disabled, the icon shows a crossed-out state.
 - Clicking the icon opens the menu:
-  - status line: "Active: Spotify → Tidal" or "Paused"
-  - **Pause / Resume**
+  - status line: "Active: Spotify → Tidal" or "Disabled: links open as usual"
+  - **Disable / Enable openstream**: while disabled, Spotify links open as usual (not converted)
   - **Recent conversions** (last 10). Clicking one opens it again, with an "Open original link" option
   - **Preferred service**: Apple Music / Tidal
   - **Real browser**: the browser that ordinary links are forwarded to
@@ -299,6 +299,7 @@ When openstream is opened, it **adds an icon to the macOS top menu bar** (the st
 ### Phase 3 — Polish & distribution (1 week)
 - [ ] Developer ID signing + notarization, Sparkle auto-updates, DMG.
 - [ ] Launch at login (`SMAppService`).
+- [ ] Custom menu bar icon replacing the SF Symbol placeholders: a monochrome template image (macOS tints it for light/dark menu bars) in three states: active, not set up, and disabled (currently `music.note`, `exclamationmark.circle`, `nosign`). Plus a matching app icon.
 - [ ] Privacy page, open-source repo, README with GIF.
 - [ ] Optional: Homebrew cask.
 
@@ -321,6 +322,7 @@ When openstream is opened, it **adds an icon to the macOS top menu bar** (the st
 3. Open source from day one? It helps a lot with trust for a default-browser app.
 4. Free, or a small paid utility? This affects backend costs and the need for an Odesli API key.
 5. Which "real browser" setup should be supported: one browser, or Velja-style rules?
+6. **Final name.** "openstream" is a working title. Openstream, Inc. (Openstream.ai) holds OPENSTREAM trademark filings, so it's risky for a store release. Current candidate: **Gunbu**, from *yartsa gunbu*, the Tibetan name for the caterpillar fungus. No app, brand or software of that name was found in a web and App Store search (2026-10-22). Watch out: searches for "gunbu" return gun software, and the fungus is a parasite, which is an awkward story for a default-browser app. Still to check: trademarks, domains, exact App Store and Play Store names.
 
 ---
 
