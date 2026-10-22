@@ -68,6 +68,21 @@ struct SettingsView: View {
                 }
             }
 
+            Section("Autoplay (optional)") {
+                Toggle("Start playing automatically", isOn: $model.autoPlay)
+                Text("Neither Tidal nor Apple Music can start playback from a link, so openstream presses the Play button for you once the song's page has opened. This needs the Accessibility permission, and openstream only uses it for that one button.")
+                    .font(.caption)
+                    .foregroundStyle(.secondary)
+                if model.autoPlayNeedsPermission {
+                    Button("Grant Accessibility permission…") { AX.requestTrust() }
+                }
+                if model.service == .tidal && model.tidalLandingPage == .artist {
+                    Text("Autoplay only works when Tidal tracks open on the album page.")
+                        .font(.caption)
+                        .foregroundStyle(.orange)
+                }
+            }
+
             Section("2. Your normal browser") {
                 Picker("Open other links in", selection: $model.browserBundleID) {
                     ForEach(Browsers.available()) { browser in

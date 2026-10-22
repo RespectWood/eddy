@@ -58,6 +58,10 @@ struct MenuContent: View {
                 }
             }
         }
+        Toggle("Start Playing Automatically", isOn: $model.autoPlay)
+        if model.autoPlayNeedsPermission {
+            Button("Autoplay needs Accessibility permission…") { AX.requestTrust() }
+        }
         Picker("Open Other Links In", selection: $model.browserBundleID) {
             ForEach(Browsers.available()) { browser in
                 Text(browser.name).tag(Optional(browser.bundleID))

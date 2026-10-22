@@ -5,6 +5,10 @@
 #   ARCHS=arm64 scripts/build-app.sh      # Apple silicon only, faster
 #   SIGN_IDENTITY="Developer ID Application: …" NOTARY_PROFILE=openstream scripts/build-app.sh
 #       # signed for distribution and notarized (profile created with `xcrun notarytool store-credentials`)
+#
+# Without SIGN_IDENTITY, a local "openstream Dev" certificate is used when present
+# (stable signature, so macOS keeps the Accessibility permission across rebuilds),
+# otherwise an ad-hoc signature.
 set -euo pipefail
 
 ROOT="$(cd "$(dirname "$0")/.." && pwd)"
@@ -38,8 +42,11 @@ strip -x "$APP/Contents/MacOS/openstream"
 sed -e "s/__VERSION__/${VERSION%%-*}/" -e "s/__BUILD__/$BUILD/" Resources/Info.plist > "$APP/Contents/Info.plist"
 plutil -lint "$APP/Contents/Info.plist" >/dev/null
 
+DEV_IDENTITY="openstream Dev"
 if [[ -n "${SIGN_IDENTITY:-}" ]]; then
     codesign --force --options runtime --timestamp --sign "$SIGN_IDENTITY" "$APP"
+elif security find-certificate -c "$DEV_IDENTITY" >/dev/null 2>&1; then
+    codesign --force --sign "$DEV_IDENTITY" "$APP"
 else
     # Ad-hoc signature: runs locally; testers must right-click → Open the first time.
     codesign --force --sign - "$APP"

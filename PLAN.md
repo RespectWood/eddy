@@ -183,6 +183,8 @@ Supporting points, in order of strength:
 | Users don't trust a "default browser" app | Adoption | Open source, local-only URL inspection, clear privacy statement, menu bar log of what was intercepted |
 | Breaking normal browsing (slow or failed forwarding) | Very bad UX, uninstall | Forward non-music URLs immediately without network calls. Thorough testing. "Pause openstream" toggle |
 | API access changes (Spotify especially) | Resolution breaks | Several layered resolvers, ISRC cache, Odesli fallback, metadata scraping fallback |
+| Permissions look scary: openstream is the default link handler **and** (with autoplay) has Accessibility | Trust, installs | Autoplay is opt-in, so without it openstream never asks for Accessibility. AX is used only on Tidal/Music right after a converted link. Open source; links handled locally. Ship signed with Developer ID and notarized (like Discord/Zoom), not via the App Store (sandboxed apps can't use Accessibility) |
+| Autoplay depends on the target apps' UI (CSS class names, identifiers) | Autoplay breaks after app updates | Prefix matching, verification step, debug dump to fix quickly; core conversion keeps working without it |
 | Apple Music API cost ($99/yr developer program) | Small cost | Needed anyway for signing and notarization |
 | Odesli rate limits / ToS | MVP scaling | Request an API key, move to direct APIs in v1 |
 | Wrong-version matches | Annoyance | Score candidates on ISRC → UPC → duration. Let users report mismatches |

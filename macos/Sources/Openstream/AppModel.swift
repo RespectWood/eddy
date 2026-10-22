@@ -14,6 +14,13 @@ final class AppModel: ObservableObject {
     @Published var tidalClientID: String { didSet { defaults.set(tidalClientID, forKey: Keys.tidalID); resetResolver() } }
     @Published var tidalClientSecret: String { didSet { defaults.set(tidalClientSecret, forKey: Keys.tidalSecret); resetResolver() } }
     @Published var tidalLandingPage: TidalLandingPage { didSet { defaults.set(tidalLandingPage.rawValue, forKey: Keys.tidalLanding) } }
+    /// Press play after opening the item. Needs the Accessibility permission.
+    @Published var autoPlay: Bool {
+        didSet {
+            defaults.set(autoPlay, forKey: Keys.autoPlay)
+            if autoPlay && !AX.isTrusted { AX.requestTrust() }
+        }
+    }
     @Published private(set) var recents: [RecentConversion]
     @Published private(set) var isDefaultHandler = false
 
@@ -29,6 +36,7 @@ final class AppModel: ObservableObject {
         static let tidalSecret = "tidalClientSecret"
         static let recents = "recents"
         static let tidalLanding = "tidalLandingPage"
+        static let autoPlay = "autoPlay"
     }
 
     init() {
@@ -39,12 +47,17 @@ final class AppModel: ObservableObject {
         tidalClientID = defaults.string(forKey: Keys.tidalID) ?? ""
         tidalClientSecret = defaults.string(forKey: Keys.tidalSecret) ?? ""
         tidalLandingPage = defaults.string(forKey: Keys.tidalLanding).flatMap(TidalLandingPage.init(rawValue:)) ?? .album
+        autoPlay = defaults.bool(forKey: Keys.autoPlay)
         recents = (defaults.data(forKey: Keys.recents))
             .flatMap { try? JSONDecoder().decode([RecentConversion].self, from: $0) } ?? []
         if browserBundleID == nil {
             browserBundleID = Browsers.currentDefault() ?? Browsers.safari
         }
+        DebugCommands.simulateClick = { [weak self] url in self?.handle(url) }
     }
+
+    /// Autoplay is on but macOS hasn't granted the permission (yet).
+    var autoPlayNeedsPermission: Bool { autoPlay && !AX.isTrusted }
 
     var statusLine: String {
         guard let service else { return "Not set up" }
@@ -59,6 +72,10 @@ final class AppModel: ObservableObject {
     // MARK: - Routing
 
     func handle(_ url: URL) {
+        if url.scheme?.lowercased() == "openstream" {
+            DebugCommands.handle(url)
+            return
+        }
         if url.isFileURL || isPaused || service == nil {
             passThrough(url)
             return
@@ -95,23 +112,41 @@ final class AppModel: ObservableObject {
         return nil
     }
 
+    /// Counts converted clicks; only the latest one may autoplay.
+    private var latestClick = 0
+
     private func convert(_ url: URL) {
+        latestClick += 1
+        let click = latestClick
         guard let service else { return }
         let resolver = resolver()
         let country = Locale.current.region?.identifier ?? "US"
         log.info("resolving \(url.absoluteString, privacy: .public)")
         Task.detached(priority: .userInitiated) {
             let result = Result { try resolver.resolve(url: url.absoluteString, service: service, country: country) }
-            await MainActor.run { self.finish(url, service: service, result: result) }
+            await MainActor.run { self.finish(url, service: service, result: result, click: click) }
         }
     }
 
-    private func finish(_ original: URL, service: Service, result: Result<Conversion, Error>) {
+    private func finish(_ original: URL, service: Service, result: Result<Conversion, Error>, click: Int) {
         switch result {
         case let .success(conversion):
             let (nativeURL, webURL) = landingURLs(for: conversion, service: service)
             let opened = TargetApps.open(nativeURL: nativeURL, webURL: webURL, service: service, browser: browserBundleID)
             remember(RecentConversion(conversion, service: service, original: original, nativeURL: nativeURL, webURL: webURL))
+            // Lookups finish in any order (cache hits are instant), so only the most
+            // recent click autoplays.
+            if opened == .native && autoPlay && click == latestClick
+                && !(service == .tidal && tidalLandingPage == .artist) {
+                AutoPlay.start(AutoPlay.Target(
+                    service: service,
+                    kind: conversion.kind == .album ? .album : .track,
+                    title: conversion.title,
+                    artist: conversion.artist,
+                    album: conversion.album,
+                    openedURL: nativeURL
+                ))
+            }
             if opened == .web {
                 Notifier.post(
                     title: "Opened \(conversion.title) in the browser",

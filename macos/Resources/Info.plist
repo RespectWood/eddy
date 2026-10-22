@@ -56,6 +56,16 @@
 				<string>spotify</string>
 			</array>
 		</dict>
+		<dict>
+			<key>CFBundleURLName</key>
+			<string>openstream developer commands</string>
+			<key>CFBundleTypeRole</key>
+			<string>Viewer</string>
+			<key>CFBundleURLSchemes</key>
+			<array>
+				<string>openstream</string>
+			</array>
+		</dict>
 	</array>
 	<key>CFBundleDocumentTypes</key>
 	<array>

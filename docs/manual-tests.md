@@ -159,6 +159,22 @@ Click a Spotify track link in each app and note whether openstream converts it:
 | I4 | Wi-Fi off, click an uncached Spotify link | Original link opens in Firefox, plus a notification "Couldn't convert the link" | |
 | I5 | Notifications from E1/F6/I4 | Appear as banners with readable text | |
 
+## K. Autoplay (ticket 0003)
+
+Menu → **Start Playing Automatically** on. macOS asks for the Accessibility permission the first time; grant it.
+
+| # | Do this | Expected | Result |
+|---|---|---|---|
+| K1 | Tidal open, click the Usher – Yeah! link | Tidal opens *Confessions* and **Yeah! starts playing** within ~2 s | |
+| K2 | Click the same link again while it plays | Keeps playing (doesn't pause or restart) | |
+| K3 | **Quit Tidal**, click the link | Tidal launches, opens the album and the song plays (may take 5–15 s) | |
+| K4 | Album link `https://open.spotify.com/album/4LH4d3cOWNNsVw41Gqt2kv` | Album plays from track 1 | |
+| K5 | Menu → Open Tidal Tracks On → Artist page, click a link | Artist page opens, nothing plays (autoplay needs the album page) | |
+| K6 | Apple Music (needs a subscription): Preferred Service → Apple Music, click the Usher link | Music opens the album and *Yeah!* plays. The pointer jumps to the row for a moment and comes back | |
+| K7 | Autoplay off | Nothing plays, no permission prompt | |
+
+If something fails: `~/Library/Application Support/openstream/debug/autoplay.log` (with debug commands enabled) shows each attempt.
+
 ## J. Undo
 
 | # | Do this | Expected | Result |
