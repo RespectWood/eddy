@@ -1,6 +1,6 @@
 # openstream
 
-**Click any Spotify link, anywhere on your Mac, and it opens in your app.**
+**Click any Spotify link, anywhere on your Mac, and it opens in your preferred streaming app.**
 
 openstream is a small macOS menu bar app for people who use Apple Music or Tidal. When a friend sends you a Spotify link, openstream finds the same track and opens it in your streaming app's desktop app instead of Spotify's web player. You don't have to search for it by hand. All other links go straight to your normal browser.
 
