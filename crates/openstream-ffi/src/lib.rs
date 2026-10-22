@@ -82,6 +82,7 @@ pub enum NotFoundReason {
     NoMatch,
     NoCredentials,
     NoMetadata,
+    AccountExpired,
 }
 
 #[derive(Debug, thiserror::Error, uniffi::Error)]
@@ -98,6 +99,8 @@ pub enum ResolveError {
         search_native_url: Option<String>,
         search_web_url: Option<String>,
     },
+    #[error("the Tidal login expired")]
+    AccountExpired,
     #[error("rate limited by {service}")]
     RateLimited { service: String },
     #[error("{message}")]
@@ -119,6 +122,7 @@ impl From<core::ResolveError> for ResolveError {
                     core::NotFoundReason::NoMatch => NotFoundReason::NoMatch,
                     core::NotFoundReason::NoCredentials => NotFoundReason::NoCredentials,
                     core::NotFoundReason::NoMetadata => NotFoundReason::NoMetadata,
+                    core::NotFoundReason::AccountExpired => NotFoundReason::AccountExpired,
                 },
                 title,
                 artist,
@@ -129,6 +133,7 @@ impl From<core::ResolveError> for ResolveError {
                 service: service.to_string(),
             },
             core::ResolveError::Network(message) => Self::Network { message },
+            core::ResolveError::AccountExpired => Self::AccountExpired,
         }
     }
 }
@@ -161,21 +166,28 @@ pub struct Resolver {
 
 #[uniffi::export]
 impl Resolver {
-    /// `cache_path` empty disables the cache. Tidal credentials are optional.
+    /// `cache_path` empty disables the cache. Tidal access, in order of preference:
+    /// the user's login (`tidal_user_store` + `tidal_client_id`), developer credentials
+    /// (`tidal_client_id` + `tidal_client_secret`), or none (Tidal falls back to search).
     #[uniffi::constructor]
     pub fn new(
         cache_path: String,
         tidal_client_id: Option<String>,
         tidal_client_secret: Option<String>,
+        tidal_user_store: Option<Arc<dyn TidalTokenStore>>,
     ) -> Arc<Self> {
-        let tidal = match (tidal_client_id, tidal_client_secret) {
-            (Some(client_id), Some(client_secret))
-                if !client_id.is_empty() && !client_secret.is_empty() =>
-            {
-                Some(core::TidalCredentials {
+        let client_id = tidal_client_id.filter(|id| !id.is_empty());
+        let secret = tidal_client_secret.filter(|s| !s.is_empty());
+        let tidal = match (client_id, secret, tidal_user_store) {
+            (Some(client_id), _, Some(store)) => Some(core::TidalAuth::User {
+                client_id,
+                store: Arc::new(StoreAdapter(store)),
+            }),
+            (Some(client_id), Some(client_secret), None) => {
+                Some(core::TidalAuth::ClientCredentials(core::TidalCredentials {
                     client_id,
                     client_secret,
-                })
+                }))
             }
             _ => None,
         };
@@ -211,4 +223,131 @@ impl Resolver {
             from_cache: c.from_cache,
         })
     }
+}
+
+// MARK: - Connect Tidal
+
+/// The user's Tidal login. Stored by the app in the Keychain.
+#[derive(Debug, Clone, uniffi::Record)]
+pub struct TidalTokens {
+    pub access_token: String,
+    pub refresh_token: Option<String>,
+    /// Unix seconds.
+    pub expires_at: u64,
+    pub user_name: Option<String>,
+    pub country: Option<String>,
+}
+
+impl From<core::TidalTokens> for TidalTokens {
+    fn from(t: core::TidalTokens) -> Self {
+        Self {
+            access_token: t.access_token,
+            refresh_token: t.refresh_token,
+            expires_at: t.expires_at,
+            user_name: t.user_name,
+            country: t.country,
+        }
+    }
+}
+
+impl From<TidalTokens> for core::TidalTokens {
+    fn from(t: TidalTokens) -> Self {
+        Self {
+            access_token: t.access_token,
+            refresh_token: t.refresh_token,
+            expires_at: t.expires_at,
+            user_name: t.user_name,
+            country: t.country,
+        }
+    }
+}
+
+/// A login in progress; kept by the app until Tidal redirects back.
+#[derive(Debug, Clone, uniffi::Record)]
+pub struct TidalLoginRequest {
+    pub authorize_url: String,
+    pub client_id: String,
+    pub redirect_uri: String,
+    pub state: String,
+    pub code_verifier: String,
+}
+
+#[derive(Debug, thiserror::Error, uniffi::Error)]
+pub enum TidalLoginError {
+    #[error("{message}")]
+    Denied { message: String },
+    #[error("the login response didn't match this login")]
+    StateMismatch,
+    #[error("the login response had no code")]
+    MissingCode,
+    #[error("{message}")]
+    Network { message: String },
+}
+
+impl From<core::tidal_auth::AuthError> for TidalLoginError {
+    fn from(e: core::tidal_auth::AuthError) -> Self {
+        use core::tidal_auth::AuthError;
+        match e {
+            AuthError::Denied(message) => Self::Denied { message },
+            AuthError::StateMismatch => Self::StateMismatch,
+            AuthError::MissingCode => Self::MissingCode,
+            AuthError::Network(message) => Self::Network { message },
+        }
+    }
+}
+
+/// Implemented by the app (Keychain). The core calls `save` after refreshing tokens
+/// and `clear` when the login is no longer valid.
+#[uniffi::export(with_foreign)]
+pub trait TidalTokenStore: Send + Sync {
+    fn load(&self) -> Option<TidalTokens>;
+    fn save(&self, tokens: TidalTokens);
+    fn clear(&self);
+}
+
+struct StoreAdapter(Arc<dyn TidalTokenStore>);
+
+impl core::TokenStore for StoreAdapter {
+    fn load(&self) -> Option<core::TidalTokens> {
+        self.0.load().map(Into::into)
+    }
+    fn save(&self, tokens: core::TidalTokens) {
+        self.0.save(tokens.into());
+    }
+    fn clear(&self) {
+        self.0.clear();
+    }
+}
+
+/// Starts a login. Open `authorize_url` in a browser sheet.
+#[uniffi::export]
+pub fn tidal_login_request(client_id: String, redirect_uri: String) -> TidalLoginRequest {
+    let r = core::tidal_auth::login_request(
+        &client_id,
+        &redirect_uri,
+        core::tidal_auth::DEFAULT_SCOPES,
+    );
+    TidalLoginRequest {
+        authorize_url: r.authorize_url,
+        client_id: r.client_id,
+        redirect_uri: r.redirect_uri,
+        state: r.state,
+        code_verifier: r.code_verifier,
+    }
+}
+
+/// Completes a login with the URL Tidal redirected to. Blocking network call.
+#[uniffi::export]
+pub fn tidal_finish_login(
+    request: TidalLoginRequest,
+    callback_url: String,
+) -> Result<TidalTokens, TidalLoginError> {
+    let request = core::tidal_auth::LoginRequest {
+        authorize_url: request.authorize_url,
+        client_id: request.client_id,
+        redirect_uri: request.redirect_uri,
+        state: request.state,
+        code_verifier: request.code_verifier,
+    };
+    Ok(core::tidal_auth::finish_login(&request, &callback_url)?.into())
 }

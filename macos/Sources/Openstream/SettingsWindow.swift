@@ -58,8 +58,14 @@ struct SettingsView: View {
                             Text(page.displayName).tag(page)
                         }
                     }
-                    DisclosureGroup("Tidal API credentials (optional)") {
-                        Text("Without these, Tidal opens a search for the track. With a free app from developer.tidal.com, it opens the exact track.")
+                }
+            }
+
+            if model.service == .tidal {
+                Section("Accounts") {
+                    TidalAccountRow(account: model.tidalAccount, browser: model.browserBundleID)
+                    DisclosureGroup("Developer") {
+                        Text("Client ID and secret of your own app from developer.tidal.com. Used only while Tidal isn't connected above.")
                             .font(.caption)
                             .foregroundStyle(.secondary)
                         TextField("Client ID", text: $model.tidalClientID)
@@ -136,6 +142,58 @@ struct SettingsView: View {
                 setupError = "Couldn't change the default browser: \(error.localizedDescription). You can also set it in System Settings → Desktop & Dock → Default web browser."
             }
             model.refreshDefaultHandlerStatus()
+        }
+    }
+}
+
+/// Connect / Connected as … / Disconnect for the user's Tidal login.
+struct TidalAccountRow: View {
+    @ObservedObject var account: TidalAccount
+    /// Where the login page opens: the user's normal browser.
+    let browser: String?
+
+    var body: some View {
+        HStack(alignment: .firstTextBaseline) {
+            VStack(alignment: .leading, spacing: 2) {
+                Text("Tidal")
+                Text(detail)
+                    .font(.caption)
+                    .foregroundStyle(detailColor)
+            }
+            Spacer()
+            switch account.status {
+            case .notConfigured:
+                EmptyView()
+            case .connecting:
+                ProgressView().controlSize(.small)
+                Button("Cancel") { account.cancelConnect() }
+            case .connected:
+                Button("Disconnect") { account.disconnect() }
+            case .needsReconnect:
+                Button("Reconnect Tidal") { account.connect(in: browser) }
+            case .notConnected, .failed:
+                Button("Connect Tidal") { account.connect(in: browser) }
+            }
+        }
+    }
+
+    private var detail: String {
+        switch account.status {
+        case .notConfigured: "Not available in this build (no Tidal client ID)."
+        case .notConnected: "Log in once for exact matches. Without it, Tidal shows search results."
+        case .connecting: "Log in to Tidal in your browser. When it asks, allow it to open openstream."
+        case let .connected(name, country):
+            "Connected" + (name.map { " as \($0)" } ?? "") + (country.map { " · \($0)" } ?? "")
+        case .needsReconnect: "Your Tidal login expired. Showing search results until you reconnect."
+        case let .failed(message): message
+        }
+    }
+
+    private var detailColor: Color {
+        switch account.status {
+        case .needsReconnect, .failed: .orange
+        case .connected: .green
+        default: .secondary
         }
     }
 }

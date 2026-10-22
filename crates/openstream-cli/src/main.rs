@@ -12,7 +12,9 @@
 use std::path::PathBuf;
 use std::process::ExitCode;
 
-use openstream_core::{parse, ResolveError, Resolver, ResolverConfig, Service, TidalCredentials};
+use openstream_core::{
+    parse, ResolveError, Resolver, ResolverConfig, Service, TidalAuth, TidalCredentials,
+};
 use serde_json::json;
 
 const USAGE: &str = "usage:
@@ -67,10 +69,12 @@ fn resolve(url: &str, options: &[String]) -> ExitCode {
         std::env::var("TIDAL_CLIENT_ID"),
         std::env::var("TIDAL_CLIENT_SECRET"),
     ) {
-        (Ok(client_id), Ok(client_secret)) => Some(TidalCredentials {
-            client_id,
-            client_secret,
-        }),
+        (Ok(client_id), Ok(client_secret)) => {
+            Some(TidalAuth::ClientCredentials(TidalCredentials {
+                client_id,
+                client_secret,
+            }))
+        }
         _ => None,
     };
     let resolver = Resolver::new(ResolverConfig {

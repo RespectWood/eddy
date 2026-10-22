@@ -58,6 +58,16 @@ struct MenuContent: View {
                 }
             }
         }
+        if model.service == .tidal {
+            switch model.tidalAccount.status {
+            case .notConnected, .failed:
+                Button("Connect Tidal for Exact Matches…") { settingsWindow.show() }
+            case .needsReconnect:
+                Button("Tidal login expired: Reconnect…") { settingsWindow.show() }
+            default:
+                EmptyView()
+            }
+        }
         Toggle("Start Playing Automatically", isOn: $model.autoPlay)
         if model.autoPlayNeedsPermission {
             Button("Autoplay needs Accessibility permission…") { AX.requestTrust() }

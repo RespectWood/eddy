@@ -11,7 +11,8 @@ use crate::http::Http;
 use crate::link::{parse, ParsedLink, SpotifyKind, SpotifyLink};
 use crate::spotify::SpotifyMeta;
 use crate::target::{search_urls, tidal_urls, ItemKind, Service, TargetUrls};
-use crate::tidal::{Tidal, TidalCredentials};
+use crate::tidal::Tidal;
+use crate::tidal_auth::TidalAuth;
 use crate::{deezer, expand, itunes, spotify};
 
 #[derive(Debug, Clone, PartialEq, Eq, Serialize, Deserialize)]
@@ -46,8 +47,9 @@ pub(crate) struct Found {
 pub struct ResolverConfig {
     /// SQLite cache location. `None` disables caching.
     pub cache_path: Option<PathBuf>,
-    /// Enables exact Tidal matching. Without it, Tidal lookups fall back to search.
-    pub tidal: Option<TidalCredentials>,
+    /// Enables exact Tidal matching (developer credentials or the user's login).
+    /// Without it, Tidal lookups fall back to search.
+    pub tidal: Option<TidalAuth>,
     /// Print every candidate and its score to stderr (CLI `--explain`). Skips the cache.
     pub explain: bool,
 }
@@ -117,7 +119,17 @@ impl Resolver {
         })?;
         let found = match service {
             Service::AppleMusic => itunes::find(&self.http, &meta, &country, self.explain)?,
-            Service::Tidal => self.find_on_tidal(&meta, &country)?,
+            Service::Tidal => match self.find_on_tidal(&meta, &country) {
+                Err(ResolveError::AccountExpired) => {
+                    return Err(not_found(
+                        NotFoundReason::AccountExpired,
+                        &meta,
+                        service,
+                        &country,
+                    ))
+                }
+                other => other?,
+            },
         };
         let Some(found) = found else {
             let reason = if service == Service::Tidal && self.tidal.is_none() {
@@ -302,10 +314,12 @@ mod tests {
             std::env::var("TIDAL_CLIENT_ID"),
             std::env::var("TIDAL_CLIENT_SECRET"),
         ) {
-            (Ok(client_id), Ok(client_secret)) => Some(TidalCredentials {
-                client_id,
-                client_secret,
-            }),
+            (Ok(client_id), Ok(client_secret)) => {
+                Some(TidalAuth::ClientCredentials(crate::TidalCredentials {
+                    client_id,
+                    client_secret,
+                }))
+            }
             _ => None,
         };
         let services: &[Service] = if tidal.is_some() {

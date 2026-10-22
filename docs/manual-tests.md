@@ -175,6 +175,20 @@ Menu → **Start Playing Automatically** on. macOS asks for the Accessibility pe
 
 If something fails: `~/Library/Application Support/openstream/debug/autoplay.log` (with debug commands enabled) shows each attempt.
 
+## L. Connect Tidal (ticket 0004)
+
+One-time setup: in developer.tidal.com → your app, add the redirect URI `openstream://auth/tidal`.
+
+| # | Do this | Expected | Result |
+|---|---|---|---|
+| L1 | Settings → Accounts → **Connect Tidal** | Tidal's login page opens in your normal browser (already logged in if it remembers Tidal) | |
+| L2 | Log in; allow the browser to open openstream | Row says "Connected" (with name and country only if `user.read` is allowed for the app) | |
+| L3 | Clear the Developer client ID/secret fields, click the Usher link | Exact match (*Confessions*) and autoplay, using your login | |
+| L4 | Quit and restart openstream | Still connected | |
+| L5 | **Disconnect**, click the Usher link | Tidal shows search results + "Connect Tidal" notification | |
+| L6 | Click Connect Tidal, then **Cancel** in Settings without logging in | Row goes back to "Connect Tidal", no error | |
+| L7 | Revoke openstream's access in your Tidal account settings, wait an hour (token expiry) and click a link | Search results + "Your Tidal login expired" notification; row shows **Reconnect Tidal** | |
+
 ## J. Undo
 
 | # | Do this | Expected | Result |

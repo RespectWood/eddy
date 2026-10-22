@@ -20,6 +20,7 @@ use crate::error::ResolveError;
 use crate::http::{json, map_err, Http};
 use crate::matching::{best_release, is_match, release_score, search_query, Candidate, Release};
 use crate::spotify::SpotifyMeta;
+use crate::tidal_auth::{self, TidalAuth, TidalTokens, TokenStore};
 
 const TOKEN_URL: &str = "https://auth.tidal.com/v1/oauth2/token";
 const API: &str = "https://openapi.tidal.com/v2";
@@ -47,8 +48,10 @@ pub(crate) struct TidalItem {
 }
 
 pub(crate) struct Tidal {
-    credentials: TidalCredentials,
+    auth: TidalAuth,
+    /// Client-credentials token cache. User tokens are cached in `user_tokens`.
     token: Mutex<Option<(String, Instant)>>,
+    user_tokens: Mutex<Option<TidalTokens>>,
 }
 
 #[derive(Debug, Deserialize)]
@@ -212,10 +215,11 @@ impl AlbumCandidate {
 }
 
 impl Tidal {
-    pub fn new(credentials: TidalCredentials) -> Self {
+    pub fn new(auth: TidalAuth) -> Self {
         Self {
-            credentials,
+            auth,
             token: Mutex::new(None),
+            user_tokens: Mutex::new(None),
         }
     }
 
@@ -434,11 +438,65 @@ impl Tidal {
         if result.is_err() {
             // A rejected token is refreshed on the next lookup.
             *self.token.lock().unwrap_or_else(|e| e.into_inner()) = None;
+            if let Some(tokens) = self
+                .user_tokens
+                .lock()
+                .unwrap_or_else(|e| e.into_inner())
+                .as_mut()
+            {
+                tokens.expires_at = 0;
+            }
         }
         result
     }
 
     fn token(&self, http: &Http) -> Result<String, ResolveError> {
+        match &self.auth {
+            TidalAuth::ClientCredentials(credentials) => self.client_token(http, credentials),
+            TidalAuth::User { client_id, store } => {
+                self.user_token(http, client_id, store.as_ref())
+            }
+        }
+    }
+
+    /// The user's login, refreshed when it's about to expire. A login that can't be
+    /// refreshed (revoked, expired refresh token) is cleared from the store.
+    fn user_token(
+        &self,
+        http: &Http,
+        client_id: &str,
+        store: &dyn TokenStore,
+    ) -> Result<String, ResolveError> {
+        let mut cached = self.user_tokens.lock().unwrap_or_else(|e| e.into_inner());
+        if cached.is_none() {
+            *cached = store.load();
+        }
+        let Some(tokens) = cached.clone() else {
+            return Err(ResolveError::AccountExpired);
+        };
+        if tokens.is_fresh() {
+            return Ok(tokens.access_token);
+        }
+        match tidal_auth::refresh(http, client_id, &tokens)? {
+            Some(fresh) => {
+                store.save(fresh.clone());
+                let access = fresh.access_token.clone();
+                *cached = Some(fresh);
+                Ok(access)
+            }
+            None => {
+                store.clear();
+                *cached = None;
+                Err(ResolveError::AccountExpired)
+            }
+        }
+    }
+
+    fn client_token(
+        &self,
+        http: &Http,
+        credentials: &TidalCredentials,
+    ) -> Result<String, ResolveError> {
         let mut cached = self.token.lock().unwrap_or_else(|e| e.into_inner());
         if let Some((token, expires)) = cached.as_ref() {
             if Instant::now() < *expires {
@@ -447,7 +505,7 @@ impl Tidal {
         }
         let basic = base64::engine::general_purpose::STANDARD.encode(format!(
             "{}:{}",
-            self.credentials.client_id, self.credentials.client_secret
+            credentials.client_id, credentials.client_secret
         ));
         let response: TokenResponse = http
             .post(TOKEN_URL)
@@ -645,10 +703,10 @@ mod tests {
             eprintln!("skipped: TIDAL_CLIENT_ID / TIDAL_CLIENT_SECRET not set");
             return;
         };
-        let tidal = Tidal::new(TidalCredentials {
+        let tidal = Tidal::new(TidalAuth::ClientCredentials(TidalCredentials {
             client_id,
             client_secret,
-        });
+        }));
         let item = tidal
             .find_track(
                 &Http::new(),

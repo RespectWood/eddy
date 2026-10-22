@@ -25,6 +25,10 @@
 	<!-- Menu bar only: no Dock icon, not in Cmd-Tab. -->
 	<key>LSUIElement</key>
 	<true/>
+	<!-- Public OAuth client ID for "Connect Tidal" (PKCE, not a secret). Filled in by
+	     scripts/build-app.sh from OPENSTREAM_TIDAL_CLIENT_ID; empty disables the feature. -->
+	<key>OpenstreamTidalClientID</key>
+	<string>__TIDAL_CLIENT_ID__</string>
 	<key>LSApplicationCategoryType</key>
 	<string>public.app-category.music</string>
 	<key>NSHighResolutionCapable</key>

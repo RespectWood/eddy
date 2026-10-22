@@ -18,9 +18,11 @@ mod resolve;
 mod spotify;
 pub mod target;
 mod tidal;
+pub mod tidal_auth;
 
 pub use error::{NotFoundReason, ResolveError};
 pub use link::{is_music_link, parse, ParsedLink, SpotifyKind, SpotifyLink};
 pub use resolve::{Conversion, Resolver, ResolverConfig};
 pub use target::{Service, TargetUrls};
 pub use tidal::TidalCredentials;
+pub use tidal_auth::{TidalAuth, TidalTokens, TokenStore};

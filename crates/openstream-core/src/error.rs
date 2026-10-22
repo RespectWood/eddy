@@ -12,6 +12,8 @@ pub enum NotFoundReason {
     NoCredentials,
     /// Spotify's metadata for the item couldn't be read, so there is nothing to search for.
     NoMetadata,
+    /// The user's Tidal login expired or was revoked; they need to reconnect.
+    AccountExpired,
 }
 
 #[derive(Debug, thiserror::Error)]
@@ -30,6 +32,11 @@ pub enum ResolveError {
         /// Search in the target service, when there's something to search for.
         search: Option<TargetUrls>,
     },
+
+    /// The connected account's login is no longer valid. Resolving turns this into a
+    /// `NotFound { reason: AccountExpired }` with a search fallback.
+    #[error("the Tidal login expired; reconnect Tidal")]
+    AccountExpired,
 
     #[error("rate limited by {0}")]
     RateLimited(&'static str),

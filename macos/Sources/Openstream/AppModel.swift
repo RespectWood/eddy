@@ -27,6 +27,8 @@ final class AppModel: ObservableObject {
 
     private let defaults = UserDefaults.standard
     private var cachedResolver: Resolver?
+    /// "Connect Tidal" login (preferred over the developer credentials above).
+    let tidalAccount = TidalAccount()
 
     private enum Keys {
         static let service = "service"
@@ -55,6 +57,10 @@ final class AppModel: ObservableObject {
             browserBundleID = Browsers.currentDefault() ?? Browsers.safari
         }
         DebugCommands.simulateClick = { [weak self] url in self?.handle(url) }
+        tidalAccount.onChange = { [weak self] in
+            self?.resetResolver()
+            self?.objectWillChange.send()
+        }
     }
 
     /// Autoplay is on but macOS hasn't granted the permission (yet).
@@ -74,6 +80,11 @@ final class AppModel: ObservableObject {
 
     func handle(_ url: URL) {
         if url.scheme?.lowercased() == "openstream" {
+            // Login redirect from the browser (`openstream://auth/tidal?code=…`).
+            if url.host == "auth" {
+                if url.path == "/tidal" { tidalAccount.handleRedirect(url) }
+                return
+            }
             DebugCommands.handle(url)
             return
         }
@@ -121,7 +132,9 @@ final class AppModel: ObservableObject {
         let click = latestClick
         guard let service else { return }
         let resolver = resolver()
-        let country = Locale.current.region?.identifier ?? "US"
+        // While connected, Tidal lookups use the account's country.
+        let country = (service == .tidal ? tidalAccount.country : nil)
+            ?? Locale.current.region?.identifier ?? "US"
         log.info("resolving \(url.absoluteString, privacy: .public)")
         Task.detached(priority: .userInitiated) {
             let result = Result { try resolver.resolve(url: url.absoluteString, service: service, country: country) }
@@ -184,10 +197,16 @@ final class AppModel: ObservableObject {
                 return
             }
             TargetApps.open(nativeURL: searchNativeUrl, webURL: searchWebUrl, service: service, browser: browserBundleID)
-            let body = reason == .noCredentials
-                ? "Exact Tidal matching needs Tidal API credentials (Settings). Showing search results instead."
-                : "Not found on \(service.displayName). Showing search results instead."
+            let body = switch reason {
+            case .noCredentials: "Connect Tidal in Settings for exact matches. Showing search results instead."
+            case .accountExpired: "Your Tidal login expired. Reconnect Tidal in Settings. Showing search results instead."
+            default: "Not found on \(service.displayName). Showing search results instead."
+            }
             Notifier.post(title: name.isEmpty ? "No exact match" : name, body: body)
+        case .AccountExpired:
+            // Normally turned into `NotFound(.accountExpired)` with a search; just in case.
+            Browsers.forward(original, to: browserBundleID)
+            Notifier.post(title: "Tidal login expired", body: "Reconnect Tidal in Settings.")
         case let .RateLimited(api):
             Browsers.forward(original, to: browserBundleID)
             Notifier.post(title: "Lookup limit reached", body: "\(api) is rate limiting requests. Opened the original link.")
@@ -218,11 +237,15 @@ final class AppModel: ObservableObject {
 
     private func resolver() -> Resolver {
         if let cachedResolver { return cachedResolver }
-        let made = Resolver(
-            cachePath: Self.cacheURL.path,
-            tidalClientId: tidalClientID.isEmpty ? nil : tidalClientID,
-            tidalClientSecret: tidalClientSecret.isEmpty ? nil : tidalClientSecret
-        )
+        // The user's login wins; developer credentials are the fallback.
+        let made = tidalAccount.isConnected
+            ? Resolver(cachePath: Self.cacheURL.path, tidalClientId: tidalAccount.clientID, tidalClientSecret: nil, tidalUserStore: tidalAccount.store)
+            : Resolver(
+                cachePath: Self.cacheURL.path,
+                tidalClientId: tidalClientID.isEmpty ? nil : tidalClientID,
+                tidalClientSecret: tidalClientSecret.isEmpty ? nil : tidalClientSecret,
+                tidalUserStore: nil
+            )
         cachedResolver = made
         return made
     }
