@@ -12,6 +12,11 @@ use crate::target::Service;
 /// Catalogs change (regional availability, re-releases), so entries expire.
 const MAX_AGE_SECS: i64 = 30 * 24 * 60 * 60;
 
+/// Bump when matching changes enough that earlier results shouldn't be reused.
+/// v2: Tidal/Apple Music prefer the original release over compilations (ticket 0002).
+const TABLE: &str = "conversions_v2";
+const OLD_TABLES: &[&str] = &["conversions"];
+
 pub(crate) struct Cache {
     conn: Connection,
 }
@@ -30,8 +35,11 @@ impl Cache {
     }
 
     fn init(conn: Connection) -> rusqlite::Result<Self> {
-        conn.execute_batch(
-            "CREATE TABLE IF NOT EXISTS conversions (
+        for old in OLD_TABLES {
+            conn.execute_batch(&format!("DROP TABLE IF EXISTS {old};"))?;
+        }
+        conn.execute_batch(&format!(
+            "CREATE TABLE IF NOT EXISTS {TABLE} (
                 spotify_kind TEXT NOT NULL,
                 spotify_id   TEXT NOT NULL,
                 service      TEXT NOT NULL,
@@ -39,8 +47,8 @@ impl Cache {
                 conversion   TEXT NOT NULL,
                 created_at   INTEGER NOT NULL,
                 PRIMARY KEY (spotify_kind, spotify_id, service, country)
-            );",
-        )?;
+            );"
+        ))?;
         Ok(Self { conn })
     }
 
@@ -48,9 +56,11 @@ impl Cache {
         let json: Option<String> = self
             .conn
             .query_row(
-                "SELECT conversion FROM conversions
-                 WHERE spotify_kind = ?1 AND spotify_id = ?2 AND service = ?3 AND country = ?4
-                   AND created_at > ?5",
+                &format!(
+                    "SELECT conversion FROM {TABLE}
+                     WHERE spotify_kind = ?1 AND spotify_id = ?2 AND service = ?3 AND country = ?4
+                       AND created_at > ?5"
+                ),
                 params![
                     link.kind.as_str(),
                     link.id,
@@ -78,7 +88,7 @@ impl Cache {
         };
         // A failed write only costs a repeat lookup later, so errors are ignored.
         let _ = self.conn.execute(
-            "INSERT OR REPLACE INTO conversions VALUES (?1, ?2, ?3, ?4, ?5, ?6)",
+            &format!("INSERT OR REPLACE INTO {TABLE} VALUES (?1, ?2, ?3, ?4, ?5, ?6)"),
             params![
                 link.kind.as_str(),
                 link.id,
@@ -112,11 +122,16 @@ mod tests {
         };
         let conversion = Conversion {
             service: Service::Tidal,
+            kind: SpotifyKind::Track,
             spotify_url: link.canonical_url(),
             title: "Never Gonna Give You Up".into(),
             artist: "Rick Astley".into(),
+            album: Some("Whenever You Need Somebody".into()),
+            album_artist: Some("Rick Astley".into()),
             native_url: "tidal://track/1".into(),
             web_url: "https://tidal.com/browse/track/1".into(),
+            artist_native_url: Some("tidal://artist/2".into()),
+            artist_web_url: Some("https://tidal.com/browse/artist/2".into()),
             from_cache: false,
         };
         assert!(cache.get(&link, Service::Tidal, "DE").is_none());

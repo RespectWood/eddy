@@ -51,6 +51,13 @@ struct MenuContent: View {
                     .tag(Optional(service))
             }
         }
+        if model.service == .tidal {
+            Picker("Open Tidal Tracks On", selection: $model.tidalLandingPage) {
+                ForEach(TidalLandingPage.allCases) { page in
+                    Text(page.displayName).tag(page)
+                }
+            }
+        }
         Picker("Open Other Links In", selection: $model.browserBundleID) {
             ForEach(Browsers.available()) { browser in
                 Text(browser.name).tag(Optional(browser.bundleID))

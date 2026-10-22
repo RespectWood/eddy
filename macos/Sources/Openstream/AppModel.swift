@@ -13,6 +13,7 @@ final class AppModel: ObservableObject {
     @Published var hasCompletedOnboarding: Bool { didSet { defaults.set(hasCompletedOnboarding, forKey: Keys.onboarded) } }
     @Published var tidalClientID: String { didSet { defaults.set(tidalClientID, forKey: Keys.tidalID); resetResolver() } }
     @Published var tidalClientSecret: String { didSet { defaults.set(tidalClientSecret, forKey: Keys.tidalSecret); resetResolver() } }
+    @Published var tidalLandingPage: TidalLandingPage { didSet { defaults.set(tidalLandingPage.rawValue, forKey: Keys.tidalLanding) } }
     @Published private(set) var recents: [RecentConversion]
     @Published private(set) var isDefaultHandler = false
 
@@ -27,6 +28,7 @@ final class AppModel: ObservableObject {
         static let tidalID = "tidalClientID"
         static let tidalSecret = "tidalClientSecret"
         static let recents = "recents"
+        static let tidalLanding = "tidalLandingPage"
     }
 
     init() {
@@ -36,6 +38,7 @@ final class AppModel: ObservableObject {
         hasCompletedOnboarding = defaults.bool(forKey: Keys.onboarded)
         tidalClientID = defaults.string(forKey: Keys.tidalID) ?? ""
         tidalClientSecret = defaults.string(forKey: Keys.tidalSecret) ?? ""
+        tidalLandingPage = defaults.string(forKey: Keys.tidalLanding).flatMap(TidalLandingPage.init(rawValue:)) ?? .album
         recents = (defaults.data(forKey: Keys.recents))
             .flatMap { try? JSONDecoder().decode([RecentConversion].self, from: $0) } ?? []
         if browserBundleID == nil {
@@ -106,8 +109,9 @@ final class AppModel: ObservableObject {
     private func finish(_ original: URL, service: Service, result: Result<Conversion, Error>) {
         switch result {
         case let .success(conversion):
-            let opened = TargetApps.open(nativeURL: conversion.nativeUrl, webURL: conversion.webUrl, service: service, browser: browserBundleID)
-            remember(RecentConversion(conversion, service: service, original: original))
+            let (nativeURL, webURL) = landingURLs(for: conversion, service: service)
+            let opened = TargetApps.open(nativeURL: nativeURL, webURL: webURL, service: service, browser: browserBundleID)
+            remember(RecentConversion(conversion, service: service, original: original, nativeURL: nativeURL, webURL: webURL))
             if opened == .web {
                 Notifier.post(
                     title: "Opened \(conversion.title) in the browser",
@@ -120,6 +124,16 @@ final class AppModel: ObservableObject {
             log.error("resolve failed: \(error.localizedDescription, privacy: .public)")
             Browsers.forward(original, to: browserBundleID)
         }
+    }
+
+    /// The page a conversion opens on: the item itself, or for Tidal tracks optionally
+    /// the artist's page.
+    private func landingURLs(for conversion: Conversion, service: Service) -> (String, String) {
+        if service == .tidal, tidalLandingPage == .artist, conversion.kind == .track,
+           let nativeURL = conversion.artistNativeUrl, let webURL = conversion.artistWebUrl {
+            return (nativeURL, webURL)
+        }
+        return (conversion.nativeUrl, conversion.webUrl)
     }
 
     private func handleFailure(_ error: ResolveError, original: URL, service: Service) {
@@ -199,14 +213,30 @@ struct RecentConversion: Codable, Identifiable, Equatable {
 
     var service: Service { Service(key: serviceKey) ?? .appleMusic }
 
-    init(_ conversion: Conversion, service: Service, original: URL) {
+    init(_ conversion: Conversion, service: Service, original: URL, nativeURL: String, webURL: String) {
         title = conversion.title
         artist = conversion.artist
         serviceKey = service.key
-        nativeURL = conversion.nativeUrl
-        webURL = conversion.webUrl
+        self.nativeURL = nativeURL
+        self.webURL = webURL
         originalURL = original.absoluteString
         date = Date()
+    }
+}
+
+/// Where Tidal track links land. Tidal links can only navigate, not start playback.
+enum TidalLandingPage: String, CaseIterable, Identifiable {
+    /// The track's album, with the song highlighted.
+    case album
+    case artist
+
+    var id: String { rawValue }
+
+    var displayName: String {
+        switch self {
+        case .album: "Album (song highlighted)"
+        case .artist: "Artist page"
+        }
     }
 }
 

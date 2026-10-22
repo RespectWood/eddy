@@ -1,5 +1,12 @@
 # Changelog
 
+## Unreleased
+
+- Tidal and Apple Music open the artist's **original release** instead of a "Various Artists" compilation that contains the same recording (ticket 0002). Tidal candidates now combine the ISRC lookup with Tidal search and are ranked by album artist, popularity and release date.
+- New setting: open Tidal tracks on the album (song highlighted) or the artist page.
+- `openstream resolve … --explain` prints every candidate and its score.
+- Cache entries from earlier versions are discarded.
+
 ## 0.1.0-alpha (unreleased)
 
 First working version.

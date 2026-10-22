@@ -2,8 +2,10 @@
 //!
 //! ```text
 //! openstream parse <url>
-//! openstream resolve <url> --to tidal|apple-music [--country DE] [--cache <path>]
+//! openstream resolve <url> --to tidal|apple-music [--country DE] [--cache <path>] [--explain]
 //! ```
+//!
+//! `--explain` prints every candidate and its score to stderr.
 //!
 //! Tidal credentials are read from `TIDAL_CLIENT_ID` / `TIDAL_CLIENT_SECRET`.
 
@@ -15,7 +17,7 @@ use serde_json::json;
 
 const USAGE: &str = "usage:
   openstream parse <url>
-  openstream resolve <url> --to tidal|apple-music [--country DE] [--cache <path>]";
+  openstream resolve <url> --to tidal|apple-music [--country DE] [--cache <path>] [--explain]";
 
 fn main() -> ExitCode {
     let args: Vec<String> = std::env::args().skip(1).collect();
@@ -39,8 +41,13 @@ fn resolve(url: &str, options: &[String]) -> ExitCode {
     let mut service = None;
     let mut country = "US".to_string();
     let mut cache_path = None;
+    let mut explain = false;
     let mut options = options.iter();
     while let Some(option) = options.next() {
+        if option == "--explain" {
+            explain = true;
+            continue;
+        }
         let value = options.next();
         match (option.as_str(), value) {
             ("--to", Some(v)) => service = Service::parse(v),
@@ -66,7 +73,11 @@ fn resolve(url: &str, options: &[String]) -> ExitCode {
         }),
         _ => None,
     };
-    let resolver = Resolver::new(ResolverConfig { cache_path, tidal });
+    let resolver = Resolver::new(ResolverConfig {
+        cache_path,
+        tidal,
+        explain,
+    });
     match resolver.resolve(url, service, &country) {
         Ok(conversion) => {
             println!(

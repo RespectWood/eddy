@@ -41,6 +41,7 @@ pub struct TargetUrls {
 pub enum ItemKind {
     Track,
     Album,
+    Artist,
 }
 
 impl ItemKind {
@@ -48,6 +49,7 @@ impl ItemKind {
         match self {
             Self::Track => "track",
             Self::Album => "album",
+            Self::Artist => "artist",
         }
     }
 }

@@ -13,6 +13,21 @@ pub(crate) struct Candidate<'a> {
     pub duration_ms: Option<u64>,
     pub explicit: Option<bool>,
     pub track_count: Option<u32>,
+    /// On a "Various Artists" compilation: still a match, but the original release is preferred.
+    pub compilation: bool,
+}
+
+/// One release (album) that a recording or edition appears on. The same ISRC or UPC
+/// often appears on many releases (originals, reissues, compilations), and the original
+/// one should open.
+#[derive(Debug, Clone, Default)]
+pub(crate) struct Release<'a> {
+    pub album_title: &'a str,
+    pub album_artists: &'a [String],
+    /// 0.0–1.0, as reported by the catalog.
+    pub popularity: f64,
+    pub release_year: Option<u32>,
+    pub explicit: Option<bool>,
 }
 
 /// Lowercase, without bracketed parts, "- Remastered 2011"-style suffixes,
@@ -97,7 +112,82 @@ pub(crate) fn score(meta: &SpotifyMeta, candidate: &Candidate) -> Option<i32> {
     if let (Some(a), Some(b)) = (meta.explicit, candidate.explicit) {
         score += if a == b { 5 } else { -5 };
     }
+    if candidate.compilation {
+        score -= 25;
+    }
     Some(score)
+}
+
+pub(crate) fn is_match(meta: &SpotifyMeta, candidate: &Candidate) -> bool {
+    score(meta, candidate).is_some_and(|s| s >= THRESHOLD)
+}
+
+pub(crate) fn is_various_artists(name: &str) -> bool {
+    matches!(
+        normalize(name).as_str(),
+        "various artists"
+            | "various"
+            | "verschiedene interpreten"
+            | "artistes divers"
+            | "varios artistas"
+    )
+}
+
+/// Scores how likely `release` is the original release of `meta`. `album_hint` is
+/// the album the item was matched on elsewhere (Deezer), empty if unknown.
+pub(crate) fn release_score(meta: &SpotifyMeta, album_hint: &str, release: &Release) -> f64 {
+    let mut score = 0.0;
+    let primary = normalize(meta.primary_artist());
+    let by_artist = release.album_artists.iter().any(|a| {
+        let a = normalize(a);
+        !a.is_empty() && !primary.is_empty() && (a.contains(&primary) || primary.contains(&a))
+    });
+    if release.album_artists.iter().any(|a| is_various_artists(a)) {
+        score -= 100.0;
+    } else if by_artist {
+        score += 100.0;
+    }
+    score += release.popularity.clamp(0.0, 1.0) * 50.0;
+    let hint = normalize(album_hint);
+    if !hint.is_empty() {
+        let title = normalize(release.album_title);
+        if release
+            .album_title
+            .trim()
+            .eq_ignore_ascii_case(album_hint.trim())
+        {
+            score += 40.0;
+        } else if title == hint {
+            score += 30.0;
+        } else if !title.is_empty() && (title.contains(&hint) || hint.contains(&title)) {
+            score += 15.0;
+        }
+    }
+    // Older releases are slightly preferred: the original usually came first.
+    if let Some(year) = release.release_year {
+        score += f64::from(2030u32.saturating_sub(year)) * 0.2;
+    }
+    if let (Some(a), Some(b)) = (meta.explicit, release.explicit) {
+        score += if a == b { 5.0 } else { -5.0 };
+    }
+    score
+}
+
+/// Picks the release most likely to be the original. The first item wins ties.
+pub(crate) fn best_release<T>(
+    meta: &SpotifyMeta,
+    album_hint: &str,
+    items: Vec<T>,
+    release: impl Fn(&T) -> Release,
+) -> Option<T> {
+    let mut best: Option<(f64, T)> = None;
+    for item in items {
+        let s = release_score(meta, album_hint, &release(&item));
+        if best.as_ref().is_none_or(|(b, _)| s > *b) {
+            best = Some((s, item));
+        }
+    }
+    best.map(|(_, item)| item)
 }
 
 /// Picks the best-scoring item above the threshold.
@@ -201,6 +291,76 @@ mod tests {
             ..Default::default()
         };
         assert!(score(&m, &c).unwrap() >= THRESHOLD);
+    }
+
+    #[test]
+    fn prefers_original_release_over_compilations() {
+        let m = meta(
+            "Yeah! (feat. Lil Jon & Ludacris)",
+            &["USHER", "Lil Jon", "Ludacris"],
+            250_373,
+        );
+        let usher = vec!["Usher".to_string()];
+        let various = vec!["Various Artists".to_string()];
+        let releases = vec![
+            ("Summer Party Hits", &various, 0.34, 2024),
+            ("Beach Party Anthems", &various, 0.44, 2023),
+            ("Confessions (20th Anniversary Edition)", &usher, 0.16, 2004),
+            ("Confessions (Expanded Edition)", &usher, 0.88, 2004),
+        ];
+        let picked = best_release(
+            &m,
+            "Confessions (Expanded Edition)",
+            releases,
+            |(t, a, p, y)| Release {
+                album_title: t,
+                album_artists: a,
+                popularity: *p,
+                release_year: Some(*y),
+                explicit: None,
+            },
+        );
+        assert_eq!(picked.unwrap().0, "Confessions (Expanded Edition)");
+    }
+
+    #[test]
+    fn original_wins_without_album_hint() {
+        let m = meta("Hello", &["Adele"], 295_000);
+        let adele = vec!["Adele".to_string()];
+        let various = vec!["Various Artists".to_string()];
+        let releases = vec![("Now 92", &various, 0.9, 2015), ("25", &adele, 0.5, 2015)];
+        let picked = best_release(&m, "", releases, |(t, a, p, y)| Release {
+            album_title: t,
+            album_artists: a,
+            popularity: *p,
+            release_year: Some(*y),
+            explicit: None,
+        });
+        assert_eq!(picked.unwrap().0, "25");
+    }
+
+    #[test]
+    fn compilation_candidates_lose_to_originals() {
+        let m = meta("Hello", &["Adele"], 295_000);
+        let original = Candidate {
+            title: "Hello",
+            artist: "Adele",
+            duration_ms: Some(295_000),
+            ..Default::default()
+        };
+        let compilation = Candidate {
+            compilation: true,
+            ..original.clone()
+        };
+        let (o, c) = (
+            score(&m, &original).unwrap(),
+            score(&m, &compilation).unwrap(),
+        );
+        assert!(o > c && c >= THRESHOLD, "{o} {c}");
+        assert!(
+            is_various_artists("Various Artists") && is_various_artists("Verschiedene Interpreten")
+        );
+        assert!(!is_various_artists("Usher"));
     }
 
     #[test]

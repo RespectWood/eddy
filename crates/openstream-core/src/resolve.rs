@@ -17,13 +17,29 @@ use crate::{deezer, expand, itunes, spotify};
 #[derive(Debug, Clone, PartialEq, Eq, Serialize, Deserialize)]
 pub struct Conversion {
     pub service: Service,
+    pub kind: SpotifyKind,
     pub spotify_url: String,
     pub title: String,
     pub artist: String,
+    /// The release that opens, e.g. "Confessions (Expanded Edition)".
+    pub album: Option<String>,
+    pub album_artist: Option<String>,
+    /// Opens the item: the track on its album page, or the album.
     pub native_url: String,
     pub web_url: String,
+    /// The primary artist's page, when the service supports it (Tidal).
+    pub artist_native_url: Option<String>,
+    pub artist_web_url: Option<String>,
     #[serde(default)]
     pub from_cache: bool,
+}
+
+/// What a service lookup found.
+pub(crate) struct Found {
+    pub urls: TargetUrls,
+    pub artist_urls: Option<TargetUrls>,
+    pub album: Option<String>,
+    pub album_artist: Option<String>,
 }
 
 #[derive(Debug, Clone, Default)]
@@ -32,12 +48,15 @@ pub struct ResolverConfig {
     pub cache_path: Option<PathBuf>,
     /// Enables exact Tidal matching. Without it, Tidal lookups fall back to search.
     pub tidal: Option<TidalCredentials>,
+    /// Print every candidate and its score to stderr (CLI `--explain`). Skips the cache.
+    pub explain: bool,
 }
 
 pub struct Resolver {
     http: Http,
     cache: Option<Mutex<Cache>>,
     tidal: Option<Tidal>,
+    explain: bool,
 }
 
 impl Resolver {
@@ -51,6 +70,7 @@ impl Resolver {
             http: Http::new(),
             cache,
             tidal: config.tidal.map(Tidal::new),
+            explain: config.explain,
         }
     }
 
@@ -84,6 +104,7 @@ impl Resolver {
         if let Some(mut hit) = self
             .with_cache(|c| c.get(link, service, &country))
             .flatten()
+            .filter(|_| !self.explain)
         {
             hit.from_cache = true;
             return Ok(hit);
@@ -95,10 +116,10 @@ impl Resolver {
             search: None,
         })?;
         let found = match service {
-            Service::AppleMusic => itunes::find(&self.http, &meta, &country)?,
+            Service::AppleMusic => itunes::find(&self.http, &meta, &country, self.explain)?,
             Service::Tidal => self.find_on_tidal(&meta, &country)?,
         };
-        let Some(urls) = found else {
+        let Some(found) = found else {
             let reason = if service == Service::Tidal && self.tidal.is_none() {
                 NotFoundReason::NoCredentials
             } else {
@@ -108,11 +129,16 @@ impl Resolver {
         };
         let conversion = Conversion {
             service,
+            kind: link.kind,
             spotify_url: link.canonical_url(),
             title: meta.title.clone(),
             artist: meta.artist_line(),
-            native_url: urls.native_url,
-            web_url: urls.web_url,
+            album: found.album,
+            album_artist: found.album_artist,
+            native_url: found.urls.native_url,
+            web_url: found.urls.web_url,
+            artist_native_url: found.artist_urls.as_ref().map(|u| u.native_url.clone()),
+            artist_web_url: found.artist_urls.map(|u| u.web_url),
             from_cache: false,
         };
         self.with_cache(|c| c.put(link, service, &country, &conversion));
@@ -123,20 +149,45 @@ impl Resolver {
         &self,
         meta: &SpotifyMeta,
         country: &str,
-    ) -> Result<Option<TargetUrls>, ResolveError> {
+    ) -> Result<Option<Found>, ResolveError> {
         let Some(tidal) = &self.tidal else {
             return Ok(None);
         };
-        let Some(code) = deezer::find_code(&self.http, meta)? else {
-            return Ok(None);
+        // Deezer supplies the ISRC/UPC and the album name. Tracks can still be found
+        // through Tidal search without it; albums need the UPC.
+        let deezer = deezer::find_code(&self.http, meta)?;
+        let album_hint = deezer
+            .as_ref()
+            .map(|d| d.album_title.as_str())
+            .unwrap_or_default();
+        let (kind, item) = match meta.kind {
+            SpotifyKind::Album => {
+                let Some(deezer) = &deezer else {
+                    return Ok(None);
+                };
+                let album = tidal.find_album(
+                    &self.http,
+                    meta,
+                    &deezer.code,
+                    album_hint,
+                    country,
+                    self.explain,
+                )?;
+                (ItemKind::Album, album)
+            }
+            _ => {
+                let isrc = deezer.as_ref().map(|d| d.code.as_str());
+                let track =
+                    tidal.find_track(&self.http, meta, isrc, album_hint, country, self.explain)?;
+                (ItemKind::Track, track)
+            }
         };
-        let kind = match meta.kind {
-            SpotifyKind::Album => ItemKind::Album,
-            _ => ItemKind::Track,
-        };
-        Ok(tidal
-            .find(&self.http, kind, &code, country)?
-            .map(|id| tidal_urls(kind, &id)))
+        Ok(item.map(|item| Found {
+            urls: tidal_urls(kind, &item.id),
+            artist_urls: item.artist_id.map(|id| tidal_urls(ItemKind::Artist, &id)),
+            album: item.album_title,
+            album_artist: item.album_artist,
+        }))
     }
 
     fn with_cache<T>(&self, f: impl FnOnce(&Cache) -> T) -> Option<T> {
@@ -240,6 +291,54 @@ mod tests {
             )
             .unwrap();
         assert!(c.native_url.contains("/album/"), "{}", c.native_url);
+    }
+
+    /// Popular tracks that also appear on many compilations. Each must open on the
+    /// artist's own release. Needs `TIDAL_CLIENT_ID` / `TIDAL_CLIENT_SECRET` for Tidal.
+    #[test]
+    #[ignore]
+    fn live_original_releases_not_compilations() {
+        let tidal = match (
+            std::env::var("TIDAL_CLIENT_ID"),
+            std::env::var("TIDAL_CLIENT_SECRET"),
+        ) {
+            (Ok(client_id), Ok(client_secret)) => Some(TidalCredentials {
+                client_id,
+                client_secret,
+            }),
+            _ => None,
+        };
+        let services: &[Service] = if tidal.is_some() {
+            &[Service::AppleMusic, Service::Tidal]
+        } else {
+            &[Service::AppleMusic]
+        };
+        let resolver = Resolver::new(ResolverConfig {
+            tidal,
+            ..Default::default()
+        });
+        let tracks = include_str!("../tests/fixtures/original_releases.txt");
+        let mut failures = Vec::new();
+        for line in tracks
+            .lines()
+            .filter(|l| !l.trim().is_empty() && !l.starts_with('#'))
+        {
+            let url = line.split('\t').next().unwrap();
+            for &service in services {
+                match resolver.resolve(url, service, "SE") {
+                    Ok(c)
+                        if c.album_artist
+                            .as_deref()
+                            .is_some_and(crate::matching::is_various_artists) =>
+                    {
+                        failures.push(format!("{line} → {service:?}: compilation {:?}", c.album))
+                    }
+                    Ok(_) => {}
+                    Err(e) => failures.push(format!("{line} → {service:?}: {e}")),
+                }
+            }
+        }
+        assert!(failures.is_empty(), "{failures:#?}");
     }
 
     #[test]

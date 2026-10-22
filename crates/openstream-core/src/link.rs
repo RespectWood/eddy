@@ -4,7 +4,7 @@
 //! free of I/O. Anything that needs the network (short link expansion,
 //! resolving) lives in other modules.
 
-use serde::Serialize;
+use serde::{Deserialize, Serialize};
 use url::Url;
 
 /// Hosts that serve Spotify content pages.
@@ -13,7 +13,7 @@ const CONTENT_HOSTS: &[&str] = &["open.spotify.com", "play.spotify.com"];
 /// Hosts that serve Spotify short links, which redirect to a content page.
 const SHORT_LINK_HOSTS: &[&str] = &["spotify.link", "spoti.fi", "spotify.app.link"];
 
-#[derive(Debug, Clone, Copy, PartialEq, Eq, Hash, Serialize)]
+#[derive(Debug, Clone, Copy, PartialEq, Eq, Hash, Serialize, Deserialize)]
 #[serde(rename_all = "snake_case")]
 pub enum SpotifyKind {
     Track,

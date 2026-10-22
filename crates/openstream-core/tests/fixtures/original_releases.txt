@@ -1,0 +1,13 @@
+# Popular tracks that are licensed to many "Various Artists" compilations.
+# Each must resolve to the artist's own release (live test, see resolve.rs).
+# Format: <spotify url> <TAB> <artist – title, for humans>
+https://open.spotify.com/track/5rb9QrpfcKFHM1EUbSIurX	USHER – Yeah!
+https://open.spotify.com/track/0VjIjW4GlUZAMYd2vXMi3b	The Weeknd – Blinding Lights
+https://open.spotify.com/track/4uLU6hMCjMI75M1A2tKUQC	Rick Astley – Never Gonna Give You Up
+https://open.spotify.com/track/3n3Ppam7vgaVa1iaRUc9Lp	The Killers – Mr. Brightside
+https://open.spotify.com/track/7tFiyTwD0nx5a1eklYtX2J	Queen – Bohemian Rhapsody
+https://open.spotify.com/track/2Fxmhks0bxGSBdJ92vM42m	Billie Eilish – bad guy
+https://open.spotify.com/track/7qiZfU4dY1lWllzX7mPBI3	Ed Sheeran – Shape of You
+https://open.spotify.com/track/32OlwWuMpZ6b0aN2RZOeMS	Mark Ronson – Uptown Funk
+https://open.spotify.com/track/2XU0oxnq2qxCpomAAuJY8K	Tones And I – Dance Monkey
+https://open.spotify.com/track/1zB4vmk8tFRmM9UULNzbLB	Imagine Dragons – Thunder

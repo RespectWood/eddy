@@ -105,6 +105,15 @@ Set Preferred Service → Tidal. Deep link formats were checked against Tidal 2.
 | E6 | In Terminal, from the repo: `cargo run -q -p openstream-cli -- resolve "https://open.spotify.com/track/0VjIjW4GlUZAMYd2vXMi3b" --to tidal --country SE`, with `TIDAL_CLIENT_ID` and `TIDAL_CLIENT_SECRET` set | Prints a `tidal://track/…` URL. If it prints an error, copy it here; the Tidal API call is untested | |
 | E7 | `open "tidal://track/<id from E6>"` | Tidal shows the track | |
 
+**Right release and landing page (ticket 0002).** Needs API credentials:
+
+| # | Do this | Expected | Result |
+|---|---|---|---|
+| E8 | Click `https://open.spotify.com/track/5rb9QrpfcKFHM1EUbSIurX` (USHER – Yeah!) | Tidal opens **Confessions (Expanded Edition)** with the song highlighted, not a "Various Artists" compilation | |
+| E9 | Click `https://open.spotify.com/track/4uLU6hMCjMI75M1A2tKUQC` (Rick Astley) | Opens **Whenever You Need Somebody** | |
+| E10 | Menu → Open Tidal Tracks On → **Artist page**, click the Usher link again | Tidal opens **Usher's artist page**. Switch back to Album afterwards | |
+| E11 | Menu → Recent Conversions | Shows the conversions. "Open in Tidal" reopens the same page as the original click | |
+
 ## F. Other Spotify links and fallbacks
 
 | # | Do this | Expected | Result |

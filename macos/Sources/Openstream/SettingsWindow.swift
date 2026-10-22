@@ -53,6 +53,11 @@ struct SettingsView: View {
                     }
                 }
                 if model.service == .tidal {
+                    Picker("Open Tidal tracks on", selection: $model.tidalLandingPage) {
+                        ForEach(TidalLandingPage.allCases) { page in
+                            Text(page.displayName).tag(page)
+                        }
+                    }
                     DisclosureGroup("Tidal API credentials (optional)") {
                         Text("Without these, Tidal opens a search for the track. With a free app from developer.tidal.com, it opens the exact track.")
                             .font(.caption)

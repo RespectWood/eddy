@@ -33,6 +33,9 @@ struct Item {
     #[serde(default)]
     isrc: Option<String>,
     artist: Artist,
+    /// Track results only.
+    #[serde(default)]
+    album: Option<AlbumRef>,
 }
 
 #[derive(Debug, Deserialize)]
@@ -41,13 +44,30 @@ struct Artist {
 }
 
 #[derive(Debug, Deserialize)]
+struct AlbumRef {
+    title: String,
+}
+
+/// The identifying code of the matched recording/release, plus the album it was
+/// found on, which helps pick the original release among a code's many matches.
+#[derive(Debug, Clone, PartialEq, Eq)]
+pub(crate) struct DeezerMatch {
+    /// ISRC for tracks, UPC for albums.
+    pub code: String,
+    pub album_title: String,
+}
+
+#[derive(Debug, Deserialize)]
 struct Codes {
     isrc: Option<String>,
     upc: Option<String>,
 }
 
-/// Returns the ISRC (tracks) or UPC (albums) of the matching Deezer item.
-pub(crate) fn find_code(http: &Http, meta: &SpotifyMeta) -> Result<Option<String>, ResolveError> {
+/// Finds the ISRC (tracks) or UPC (albums) of the matching Deezer item.
+pub(crate) fn find_code(
+    http: &Http,
+    meta: &SpotifyMeta,
+) -> Result<Option<DeezerMatch>, ResolveError> {
     let path = match meta.kind {
         SpotifyKind::Album => "album",
         _ => "track",
@@ -64,17 +84,29 @@ pub(crate) fn find_code(http: &Http, meta: &SpotifyMeta) -> Result<Option<String
         duration_ms: i.duration.map(|s| s * 1000),
         explicit: i.explicit_lyrics,
         track_count: i.nb_tracks,
+        compilation: false,
     }) else {
         return Ok(None);
     };
-    if item.isrc.is_some() {
-        return Ok(item.isrc);
-    }
-    let codes: Codes = json(http.get(&format!("{API}/{path}/{}", item.id)), "Deezer")?;
-    Ok(match meta.kind {
-        SpotifyKind::Album => codes.upc,
-        _ => codes.isrc,
-    })
+    let album_title = match meta.kind {
+        SpotifyKind::Album => item.title.clone(),
+        _ => item
+            .album
+            .as_ref()
+            .map(|a| a.title.clone())
+            .unwrap_or_default(),
+    };
+    let code = match item.isrc {
+        Some(isrc) => Some(isrc),
+        None => {
+            let codes: Codes = json(http.get(&format!("{API}/{path}/{}", item.id)), "Deezer")?;
+            match meta.kind {
+                SpotifyKind::Album => codes.upc,
+                _ => codes.isrc,
+            }
+        }
+    };
+    Ok(code.map(|code| DeezerMatch { code, album_title }))
 }
 
 #[cfg(test)]
@@ -95,7 +127,8 @@ mod tests {
         };
         // Deezer's results don't always include the original release, so any Rick Astley
         // (label prefix GBARL) recording of the song counts.
-        let isrc = find_code(&Http::new(), &meta).unwrap().unwrap();
-        assert!(isrc.starts_with("GBARL"), "{isrc}");
+        let found = find_code(&Http::new(), &meta).unwrap().unwrap();
+        assert!(found.code.starts_with("GBARL"), "{}", found.code);
+        assert!(!found.album_title.is_empty());
     }
 }

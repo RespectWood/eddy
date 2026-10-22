@@ -63,11 +63,17 @@ impl From<Service> for core::Service {
 
 #[derive(Debug, Clone, uniffi::Record)]
 pub struct Conversion {
+    pub kind: SpotifyKind,
     pub spotify_url: String,
     pub title: String,
     pub artist: String,
+    pub album: Option<String>,
+    pub album_artist: Option<String>,
     pub native_url: String,
     pub web_url: String,
+    /// The primary artist's page (Tidal only).
+    pub artist_native_url: Option<String>,
+    pub artist_web_url: Option<String>,
     pub from_cache: bool,
 }
 
@@ -175,7 +181,11 @@ impl Resolver {
         };
         let cache_path = (!cache_path.is_empty()).then(|| PathBuf::from(cache_path));
         Arc::new(Self {
-            inner: core::Resolver::new(core::ResolverConfig { cache_path, tidal }),
+            inner: core::Resolver::new(core::ResolverConfig {
+                cache_path,
+                tidal,
+                explain: false,
+            }),
         })
     }
 
@@ -188,11 +198,16 @@ impl Resolver {
     ) -> Result<Conversion, ResolveError> {
         let c = self.inner.resolve(&url, service.into(), &country)?;
         Ok(Conversion {
+            kind: c.kind.into(),
             spotify_url: c.spotify_url,
             title: c.title,
             artist: c.artist,
+            album: c.album,
+            album_artist: c.album_artist,
             native_url: c.native_url,
             web_url: c.web_url,
+            artist_native_url: c.artist_native_url,
+            artist_web_url: c.artist_web_url,
             from_cache: c.from_cache,
         })
     }

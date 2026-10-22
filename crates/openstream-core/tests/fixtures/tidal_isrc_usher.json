@@ -1,0 +1,1012 @@
+{
+ "data": [
+  {
+   "id": "360985584",
+   "type": "tracks",
+   "attributes": {
+    "title": "Yeah! (feat. Lil Jon & Ludacris)",
+    "isrc": "USAR10301423",
+    "explicit": false,
+    "popularity": 0.343133922455047
+   },
+   "relationships": {
+    "artists": {
+     "data": [
+      {
+       "id": "82832852",
+       "type": "artists"
+      },
+      {
+       "id": "6413",
+       "type": "artists"
+      },
+      {
+       "id": "24907",
+       "type": "artists"
+      }
+     ]
+    },
+    "albums": {
+     "data": [
+      {
+       "id": "360985540",
+       "type": "albums"
+      }
+     ]
+    }
+   }
+  },
+  {
+   "id": "55800",
+   "type": "tracks",
+   "attributes": {
+    "title": "Yeah! (feat. Lil Jon & Ludacris)",
+    "isrc": "USAR10301423",
+    "explicit": false,
+    "popularity": 0.09673389571757067
+   },
+   "relationships": {
+    "artists": {
+     "data": [
+      {
+       "id": "1518",
+       "type": "artists"
+      },
+      {
+       "id": "6413",
+       "type": "artists"
+      },
+      {
+       "id": "24907",
+       "type": "artists"
+      }
+     ]
+    },
+    "albums": {
+     "data": [
+      {
+       "id": "55797",
+       "type": "albums"
+      }
+     ]
+    }
+   }
+  },
+  {
+   "id": "375409678",
+   "type": "tracks",
+   "attributes": {
+    "title": "Yeah! (feat. Lil Jon & Ludacris)",
+    "isrc": "USAR10301423",
+    "explicit": false,
+    "popularity": 0.23032324016094208
+   },
+   "relationships": {
+    "artists": {
+     "data": [
+      {
+       "id": "1518",
+       "type": "artists"
+      },
+      {
+       "id": "6413",
+       "type": "artists"
+      },
+      {
+       "id": "24907",
+       "type": "artists"
+      }
+     ]
+    },
+    "albums": {
+     "data": [
+      {
+       "id": "375409573",
+       "type": "albums"
+      }
+     ]
+    }
+   }
+  },
+  {
+   "id": "357790612",
+   "type": "tracks",
+   "attributes": {
+    "title": "Yeah! (feat. Lil Jon & Ludacris)",
+    "isrc": "USAR10301423",
+    "explicit": false,
+    "popularity": 0.06416419537326806
+   },
+   "relationships": {
+    "artists": {
+     "data": [
+      {
+       "id": "1518",
+       "type": "artists"
+      },
+      {
+       "id": "6413",
+       "type": "artists"
+      },
+      {
+       "id": "24907",
+       "type": "artists"
+      }
+     ]
+    },
+    "albums": {
+     "data": [
+      {
+       "id": "357790521",
+       "type": "albums"
+      }
+     ]
+    }
+   }
+  },
+  {
+   "id": "353004569",
+   "type": "tracks",
+   "attributes": {
+    "title": "Yeah! (feat. Lil Jon & Ludacris)",
+    "isrc": "USAR10301423",
+    "explicit": false,
+    "popularity": 0.35621607303619385
+   },
+   "relationships": {
+    "artists": {
+     "data": [
+      {
+       "id": "84286990",
+       "type": "artists"
+      },
+      {
+       "id": "6413",
+       "type": "artists"
+      },
+      {
+       "id": "24907",
+       "type": "artists"
+      }
+     ]
+    },
+    "albums": {
+     "data": [
+      {
+       "id": "353004537",
+       "type": "albums"
+      }
+     ]
+    }
+   }
+  },
+  {
+   "id": "359470906",
+   "type": "tracks",
+   "attributes": {
+    "title": "Yeah! (feat. Lil Jon & Ludacris)",
+    "isrc": "USAR10301423",
+    "explicit": false,
+    "popularity": 0.0644018833628713
+   },
+   "relationships": {
+    "artists": {
+     "data": [
+      {
+       "id": "1518",
+       "type": "artists"
+      },
+      {
+       "id": "6413",
+       "type": "artists"
+      },
+      {
+       "id": "24907",
+       "type": "artists"
+      }
+     ]
+    },
+    "albums": {
+     "data": [
+      {
+       "id": "359470894",
+       "type": "albums"
+      }
+     ]
+    }
+   }
+  },
+  {
+   "id": "166621207",
+   "type": "tracks",
+   "attributes": {
+    "title": "Yeah! (feat. Lil Jon & Ludacris)",
+    "isrc": "USAR10301423",
+    "explicit": false,
+    "popularity": 0.20565504554627778
+   },
+   "relationships": {
+    "artists": {
+     "data": [
+      {
+       "id": "84286990",
+       "type": "artists"
+      },
+      {
+       "id": "6413",
+       "type": "artists"
+      },
+      {
+       "id": "24907",
+       "type": "artists"
+      }
+     ]
+    },
+    "albums": {
+     "data": [
+      {
+       "id": "166621174",
+       "type": "albums"
+      }
+     ]
+    }
+   }
+  },
+  {
+   "id": "360985942",
+   "type": "tracks",
+   "attributes": {
+    "title": "Yeah! (feat. Lil Jon & Ludacris)",
+    "isrc": "USAR10301423",
+    "explicit": false,
+    "popularity": 0.15939689630276738
+   },
+   "relationships": {
+    "artists": {
+     "data": [
+      {
+       "id": "1518",
+       "type": "artists"
+      },
+      {
+       "id": "6413",
+       "type": "artists"
+      },
+      {
+       "id": "24907",
+       "type": "artists"
+      }
+     ]
+    },
+    "albums": {
+     "data": [
+      {
+       "id": "360985802",
+       "type": "albums"
+      }
+     ]
+    }
+   }
+  },
+  {
+   "id": "395186370",
+   "type": "tracks",
+   "attributes": {
+    "title": "Yeah! (feat. Lil Jon & Ludacris)",
+    "isrc": "USAR10301423",
+    "explicit": false,
+    "popularity": 0.16061616012946622
+   },
+   "relationships": {
+    "artists": {
+     "data": [
+      {
+       "id": "1518",
+       "type": "artists"
+      },
+      {
+       "id": "6413",
+       "type": "artists"
+      },
+      {
+       "id": "24907",
+       "type": "artists"
+      }
+     ]
+    },
+    "albums": {
+     "data": [
+      {
+       "id": "395186368",
+       "type": "albums"
+      }
+     ]
+    }
+   }
+  },
+  {
+   "id": "287782994",
+   "type": "tracks",
+   "attributes": {
+    "title": "Yeah! (feat. Lil Jon & Ludacris)",
+    "isrc": "USAR10301423",
+    "explicit": false,
+    "popularity": 0.44259524781243
+   },
+   "relationships": {
+    "artists": {
+     "data": [
+      {
+       "id": "82832852",
+       "type": "artists"
+      },
+      {
+       "id": "6413",
+       "type": "artists"
+      },
+      {
+       "id": "24907",
+       "type": "artists"
+      }
+     ]
+    },
+    "albums": {
+     "data": [
+      {
+       "id": "287782976",
+       "type": "albums"
+      }
+     ]
+    }
+   }
+  },
+  {
+   "id": "357788735",
+   "type": "tracks",
+   "attributes": {
+    "title": "Yeah! (feat. Lil Jon & Ludacris)",
+    "isrc": "USAR10301423",
+    "explicit": false,
+    "popularity": 0.14613774418830872
+   },
+   "relationships": {
+    "artists": {
+     "data": [
+      {
+       "id": "1518",
+       "type": "artists"
+      },
+      {
+       "id": "6413",
+       "type": "artists"
+      },
+      {
+       "id": "24907",
+       "type": "artists"
+      }
+     ]
+    },
+    "albums": {
+     "data": [
+      {
+       "id": "357788634",
+       "type": "albums"
+      }
+     ]
+    }
+   }
+  },
+  {
+   "id": "409692292",
+   "type": "tracks",
+   "attributes": {
+    "title": "Yeah! (feat. Lil Jon & Ludacris)",
+    "isrc": "USAR10301423",
+    "explicit": false,
+    "popularity": 0.3583639930456994
+   },
+   "relationships": {
+    "artists": {
+     "data": [
+      {
+       "id": "1518",
+       "type": "artists"
+      },
+      {
+       "id": "6413",
+       "type": "artists"
+      },
+      {
+       "id": "24907",
+       "type": "artists"
+      }
+     ]
+    },
+    "albums": {
+     "data": [
+      {
+       "id": "409692289",
+       "type": "albums"
+      }
+     ]
+    }
+   }
+  },
+  {
+   "id": "50332037",
+   "type": "tracks",
+   "attributes": {
+    "title": "Yeah! (feat. Lil Jon & Ludacris)",
+    "isrc": "USAR10301423",
+    "explicit": false,
+    "popularity": 0.31524115369746414
+   },
+   "relationships": {
+    "artists": {
+     "data": [
+      {
+       "id": "1518",
+       "type": "artists"
+      },
+      {
+       "id": "6413",
+       "type": "artists"
+      },
+      {
+       "id": "24907",
+       "type": "artists"
+      }
+     ]
+    },
+    "albums": {
+     "data": [
+      {
+       "id": "50332035",
+       "type": "albums"
+      }
+     ]
+    }
+   }
+  },
+  {
+   "id": "11337915",
+   "type": "tracks",
+   "attributes": {
+    "title": "Yeah! (feat. Lil Jon & Ludacris)",
+    "isrc": "USAR10301423",
+    "explicit": false,
+    "popularity": 0.884652152618982
+   },
+   "relationships": {
+    "artists": {
+     "data": [
+      {
+       "id": "1518",
+       "type": "artists"
+      },
+      {
+       "id": "6413",
+       "type": "artists"
+      },
+      {
+       "id": "24907",
+       "type": "artists"
+      }
+     ]
+    },
+    "albums": {
+     "data": [
+      {
+       "id": "11337913",
+       "type": "albums"
+      }
+     ]
+    }
+   }
+  },
+  {
+   "id": "359467401",
+   "type": "tracks",
+   "attributes": {
+    "title": "Yeah! (feat. Lil Jon & Ludacris)",
+    "isrc": "USAR10301423",
+    "explicit": false,
+    "popularity": 0.23578598149821522
+   },
+   "relationships": {
+    "artists": {
+     "data": [
+      {
+       "id": "82832852",
+       "type": "artists"
+      },
+      {
+       "id": "6413",
+       "type": "artists"
+      },
+      {
+       "id": "24907",
+       "type": "artists"
+      }
+     ]
+    },
+    "albums": {
+     "data": [
+      {
+       "id": "359467373",
+       "type": "albums"
+      }
+     ]
+    }
+   }
+  },
+  {
+   "id": "102519851",
+   "type": "tracks",
+   "attributes": {
+    "title": "Yeah! (feat. Lil Jon & Ludacris)",
+    "isrc": "USAR10301423",
+    "explicit": false,
+    "popularity": 0.04621705412864685
+   },
+   "relationships": {
+    "artists": {
+     "data": [
+      {
+       "id": "1518",
+       "type": "artists"
+      },
+      {
+       "id": "6413",
+       "type": "artists"
+      },
+      {
+       "id": "24907",
+       "type": "artists"
+      }
+     ]
+    },
+    "albums": {
+     "data": [
+      {
+       "id": "102519830",
+       "type": "albums"
+      }
+     ]
+    }
+   }
+  },
+  {
+   "id": "287780634",
+   "type": "tracks",
+   "attributes": {
+    "title": "Yeah! (feat. Lil Jon & Ludacris)",
+    "isrc": "USAR10301423",
+    "explicit": false,
+    "popularity": 0.06472107434646057
+   },
+   "relationships": {
+    "artists": {
+     "data": [
+      {
+       "id": "82832852",
+       "type": "artists"
+      },
+      {
+       "id": "6413",
+       "type": "artists"
+      },
+      {
+       "id": "24907",
+       "type": "artists"
+      }
+     ]
+    },
+    "albums": {
+     "data": [
+      {
+       "id": "287780595",
+       "type": "albums"
+      }
+     ]
+    }
+   }
+  },
+  {
+   "id": "387617039",
+   "type": "tracks",
+   "attributes": {
+    "title": "Yeah! (feat. Lil Jon & Ludacris)",
+    "isrc": "USAR10301423",
+    "explicit": false,
+    "popularity": 0.03472489617069114
+   },
+   "relationships": {
+    "artists": {
+     "data": [
+      {
+       "id": "1518",
+       "type": "artists"
+      },
+      {
+       "id": "6413",
+       "type": "artists"
+      },
+      {
+       "id": "24907",
+       "type": "artists"
+      }
+     ]
+    },
+    "albums": {
+     "data": [
+      {
+       "id": "387617033",
+       "type": "albums"
+      }
+     ]
+    }
+   }
+  },
+  {
+   "id": "345670745",
+   "type": "tracks",
+   "attributes": {
+    "title": "Yeah! (feat. Lil Jon & Ludacris)",
+    "isrc": "USAR10301423",
+    "explicit": false,
+    "popularity": 0.04616868868470192
+   },
+   "relationships": {
+    "artists": {
+     "data": [
+      {
+       "id": "82832852",
+       "type": "artists"
+      },
+      {
+       "id": "6413",
+       "type": "artists"
+      },
+      {
+       "id": "24907",
+       "type": "artists"
+      }
+     ]
+    },
+    "albums": {
+     "data": [
+      {
+       "id": "345670721",
+       "type": "albums"
+      }
+     ]
+    }
+   }
+  },
+  {
+   "id": "353004199",
+   "type": "tracks",
+   "attributes": {
+    "title": "Yeah! (feat. Lil Jon & Ludacris)",
+    "isrc": "USAR10301423",
+    "explicit": false,
+    "popularity": 0.2018030434846878
+   },
+   "relationships": {
+    "artists": {
+     "data": [
+      {
+       "id": "82832852",
+       "type": "artists"
+      },
+      {
+       "id": "6413",
+       "type": "artists"
+      },
+      {
+       "id": "24907",
+       "type": "artists"
+      }
+     ]
+    },
+    "albums": {
+     "data": [
+      {
+       "id": "353004174",
+       "type": "albums"
+      }
+     ]
+    }
+   }
+  }
+ ],
+ "included": [
+  {
+   "id": "102519830",
+   "type": "albums",
+   "attributes": {
+    "title": "Urban Power Beats",
+    "barcodeId": "886447507674",
+    "explicit": true,
+    "releaseDate": "2019-01-18",
+    "popularity": 0.08685574680566788
+   },
+   "relationships": {}
+  },
+  {
+   "id": "11337913",
+   "type": "albums",
+   "attributes": {
+    "title": "Confessions (Expanded Edition)",
+    "barcodeId": "888880746177",
+    "explicit": false,
+    "releaseDate": "2004-03-23",
+    "popularity": 0.7617049866532625
+   },
+   "relationships": {}
+  },
+  {
+   "id": "166621174",
+   "type": "albums",
+   "attributes": {
+    "title": "NYT\u00c5R 2021 FESTEN - MUSIKKEN TIL NYT\u00c5RSFESTEN",
+    "barcodeId": "886448982043",
+    "explicit": true,
+    "releaseDate": "2019-12-13",
+    "popularity": 0.43570040618832795
+   },
+   "relationships": {}
+  },
+  {
+   "id": "287780595",
+   "type": "albums",
+   "attributes": {
+    "title": "Summer Party Anthems",
+    "barcodeId": "196871003070",
+    "explicit": true,
+    "releaseDate": "2023-04-14",
+    "popularity": 0.226217379910361
+   },
+   "relationships": {}
+  },
+  {
+   "id": "287782976",
+   "type": "albums",
+   "attributes": {
+    "title": "Beach Party Anthems",
+    "barcodeId": "196871003216",
+    "explicit": true,
+    "releaseDate": "2023-04-14",
+    "popularity": 0.23002919983570422
+   },
+   "relationships": {}
+  },
+  {
+   "id": "345670721",
+   "type": "albums",
+   "attributes": {
+    "title": "Serenity Songs",
+    "barcodeId": "196871853132",
+    "explicit": true,
+    "releaseDate": "2024-02-16",
+    "popularity": 0.049852027736666964
+   },
+   "relationships": {}
+  },
+  {
+   "id": "353004174",
+   "type": "albums",
+   "attributes": {
+    "title": "Beach Party 2024",
+    "barcodeId": "196871959384",
+    "explicit": true,
+    "releaseDate": "2024-04-04",
+    "popularity": 0.2843253366860877
+   },
+   "relationships": {}
+  },
+  {
+   "id": "353004537",
+   "type": "albums",
+   "attributes": {
+    "title": "Pop Summer Hits 2024",
+    "barcodeId": "196871959421",
+    "explicit": true,
+    "releaseDate": "2024-04-06",
+    "popularity": 0.0745067583051663
+   },
+   "relationships": {}
+  },
+  {
+   "id": "357788634",
+   "type": "albums",
+   "attributes": {
+    "title": "Summer Party 2024 / Best Bangers",
+    "barcodeId": "196872030808",
+    "explicit": true,
+    "releaseDate": "2024-05-06",
+    "popularity": 0.05563932068687739
+   },
+   "relationships": {}
+  },
+  {
+   "id": "357790521",
+   "type": "albums",
+   "attributes": {
+    "title": "Pop Pool Party Hits",
+    "barcodeId": "196872030761",
+    "explicit": true,
+    "releaseDate": "2024-05-03",
+    "popularity": 0.10462052235812239
+   },
+   "relationships": {}
+  },
+  {
+   "id": "359467373",
+   "type": "albums",
+   "attributes": {
+    "title": "Beer Garden Vibes",
+    "barcodeId": "196872034387",
+    "explicit": true,
+    "releaseDate": "2024-04-26",
+    "popularity": 0.07757528890338954
+   },
+   "relationships": {}
+  },
+  {
+   "id": "359470894",
+   "type": "albums",
+   "attributes": {
+    "title": "Hen Do Classics",
+    "barcodeId": "196872034806",
+    "explicit": true,
+    "releaseDate": "2024-04-26",
+    "popularity": 0.3249377842469134
+   },
+   "relationships": {}
+  },
+  {
+   "id": "360985540",
+   "type": "albums",
+   "attributes": {
+    "title": "Summer Party Hits",
+    "barcodeId": "196872078343",
+    "explicit": true,
+    "releaseDate": "2024-05-23",
+    "popularity": 0.0891324803651781
+   },
+   "relationships": {}
+  },
+  {
+   "id": "360985802",
+   "type": "albums",
+   "attributes": {
+    "title": "American Spirit",
+    "barcodeId": "196872078244",
+    "explicit": true,
+    "releaseDate": "2024-05-14",
+    "popularity": 0.1136518786947024
+   },
+   "relationships": {}
+  },
+  {
+   "id": "375409573",
+   "type": "albums",
+   "attributes": {
+    "title": "Zomerhits Allertijden 2025",
+    "barcodeId": "196871995856",
+    "explicit": true,
+    "releaseDate": "2024-07-19",
+    "popularity": 0.3319605452616966
+   },
+   "relationships": {}
+  },
+  {
+   "id": "387617033",
+   "type": "albums",
+   "attributes": {
+    "title": "Pub Christmas | Office Christmas Party Hits",
+    "barcodeId": "196872468274",
+    "explicit": true,
+    "releaseDate": "2024-09-20",
+    "popularity": 0.10576245046601096
+   },
+   "relationships": {}
+  },
+  {
+   "id": "395186368",
+   "type": "albums",
+   "attributes": {
+    "title": "Confessions (20th Anniversary Edition)",
+    "barcodeId": "196871942218",
+    "explicit": false,
+    "releaseDate": "2004-03-23",
+    "popularity": 0.3167262116797709
+   },
+   "relationships": {}
+  },
+  {
+   "id": "409692289",
+   "type": "albums",
+   "attributes": {
+    "title": "2000s R&B Classics - Top R&B Tracks From 1999-2009",
+    "barcodeId": "196872785616",
+    "explicit": true,
+    "releaseDate": "2025-01-17",
+    "popularity": 0.3032362702932865
+   },
+   "relationships": {}
+  },
+  {
+   "id": "50332035",
+   "type": "albums",
+   "attributes": {
+    "title": "00s Party Mixtape",
+    "barcodeId": "886445458688",
+    "explicit": true,
+    "releaseDate": "2015-09-04",
+    "popularity": 0.5011337863597018
+   },
+   "relationships": {}
+  },
+  {
+   "id": "55797",
+   "type": "albums",
+   "attributes": {
+    "title": "Touch My Soul",
+    "barcodeId": "828766764956",
+    "explicit": true,
+    "releaseDate": "2005-02-14",
+    "popularity": 0.33548474311828613
+   },
+   "relationships": {}
+  },
+  {
+   "id": "1518",
+   "type": "artists",
+   "attributes": {
+    "name": "USHER",
+    "popularity": 0.9227020339637854
+   },
+   "relationships": {}
+  },
+  {
+   "id": "24907",
+   "type": "artists",
+   "attributes": {
+    "name": "Ludacris",
+    "popularity": 0.880950748822884
+   },
+   "relationships": {}
+  },
+  {
+   "id": "6413",
+   "type": "artists",
+   "attributes": {
+    "name": "Lil Jon",
+    "popularity": 0.7985675214262654
+   },
+   "relationships": {}
+  },
+  {
+   "id": "82832852",
+   "type": "artists",
+   "attributes": {
+    "name": "Usher",
+    "popularity": 0.6589616756877481
+   },
+   "relationships": {}
+  },
+  {
+   "id": "84286990",
+   "type": "artists",
+   "attributes": {
+    "name": "Usher",
+    "popularity": 0.32332294776489606
+   },
+   "relationships": {}
+  }
+ ],
+ "links": {}
+}
