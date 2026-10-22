@@ -1,0 +1,24 @@
+# Real-world link shapes and what the parser should return.
+# Format: <url> <TAB> <expected>, where expected is one of:
+#   spotify <kind> <id> | short | not_music
+https://open.spotify.com/track/4uLU6hMCjMI75M1A2tKUQC	spotify track 4uLU6hMCjMI75M1A2tKUQC
+https://open.spotify.com/track/4uLU6hMCjMI75M1A2tKUQC?si=6b3f2a9c1d4e4f5a	spotify track 4uLU6hMCjMI75M1A2tKUQC
+https://open.spotify.com/intl-de/track/4uLU6hMCjMI75M1A2tKUQC?si=abc	spotify track 4uLU6hMCjMI75M1A2tKUQC
+https://open.spotify.com/intl-pt-BR/track/4uLU6hMCjMI75M1A2tKUQC	spotify track 4uLU6hMCjMI75M1A2tKUQC
+https://open.spotify.com/album/4LH4d3cOWNNsVw41Gqt2kv?si=xyz	spotify album 4LH4d3cOWNNsVw41Gqt2kv
+https://open.spotify.com/artist/0gxyHStUsqpMadRV0Di1Qt	spotify artist 0gxyHStUsqpMadRV0Di1Qt
+https://open.spotify.com/playlist/37i9dQZF1DXcBWIGoYBM5M?si=1	spotify playlist 37i9dQZF1DXcBWIGoYBM5M
+https://open.spotify.com/episode/512ojhOuo1ktJprKbVcKyQ	spotify episode 512ojhOuo1ktJprKbVcKyQ
+https://open.spotify.com/show/2MAi0BvDc6GTFvKFPXnkCL	spotify show 2MAi0BvDc6GTFvKFPXnkCL
+https://open.spotify.com/user/spotify/playlist/37i9dQZF1DXcBWIGoYBM5M	spotify playlist 37i9dQZF1DXcBWIGoYBM5M
+spotify:track:4uLU6hMCjMI75M1A2tKUQC	spotify track 4uLU6hMCjMI75M1A2tKUQC
+spotify:album:4LH4d3cOWNNsVw41Gqt2kv	spotify album 4LH4d3cOWNNsVw41Gqt2kv
+https://spotify.link/b8ZkKpRqRDb	short
+https://spoti.fi/3Hx9kQd	short
+https://www.spotify.com/de/premium/	not_music
+https://open.spotify.com/	not_music
+https://open.spotify.com/genre/0JQ5DAqbMKFQ00XGBls6ym	not_music
+https://music.apple.com/de/album/never-gonna-give-you-up/1559523357?i=1559523359	not_music
+https://tidal.com/browse/track/1234567	not_music
+https://www.youtube.com/watch?v=dQw4w9WgXcQ	not_music
+https://open.spotify.com.example.org/track/4uLU6hMCjMI75M1A2tKUQC	not_music

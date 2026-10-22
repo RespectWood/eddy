@@ -70,6 +70,8 @@ click link ──► [1] intercept ──► [2] parse ──► [3] resolve ─
 | **Direct APIs** | Spotify Web API → ISRC, then Apple Music API `GET /v1/catalog/{storefront}/songs?filter[isrc]=…`, then TIDAL API (`openapi.tidal.com`) filter by ISRC | Accurate, no middleman, full control | Needs credentials for every service. Apple Music API needs a paid Apple Developer membership and a signed developer token. Spotify has tightened Web API access several times, so current dev-mode limits need checking. |
 | **Metadata fallback** | Read `og:title` / `music:musician` meta tags from the `open.spotify.com` page, or use Spotify oEmbed, then text-search the target catalog (iTunes Search API is free and needs no auth) | Needs no Spotify credentials | Fuzzy matching. Remasters, live versions and clean vs. explicit versions get mixed up |
 
+> **Update (2026-10-22):** Odesli's keyless public API is shut down (`401 PUBLIC_API_ACCESS_DEPRECATED`). v0.1 uses free sources instead: Spotify's public embed page for metadata, the **iTunes Search API** for Apple Music (fuzzy match on title, artist and duration), and **Deezer** (ISRC/UPC) + the **official TIDAL API** (free client credentials) for exact Tidal matches. Without Tidal credentials, openstream opens a search in the Tidal app. An Odesli API key is still an option for later.
+
 **Recommended strategy (layered):**
 1. **MVP:** use Odesli. It's quick to build and good enough to test whether the idea works.
 2. **v1:** resolve directly by ISRC/UPC, with Odesli as a fallback (or the other way round). Put the credentials behind a small backend so no API secrets ship inside the app.
@@ -216,7 +218,8 @@ Rust: openstream-core
 ├── expand      – short link expansion (spotify.link, spoti.fi)
 ├── resolve     – Resolver trait
 │     ├── CacheResolver (SQLite)
-│     ├── OdesliResolver
+│     ├── ItunesResolver (Apple Music, fuzzy match)       [v0.1]
+│     ├── DeezerIsrc + TidalApi (exact ISRC/UPC match)  [v0.1]
 │     ├── DirectApiResolver (Spotify → ISRC/UPC → Apple Music / Tidal)   [v1]
 │     └── SearchFallbackResolver
 └── target      – target service URL/deep-link builders (music://, tidal://, web fallback)
@@ -228,6 +231,24 @@ Swift: openstream.app
 ├── AppOpener                     – detects installed native apps and opens them (native first, web last)
 └── Settings                      – preferred service, real browser, storefront, fallback behaviour
 ```
+
+**Menu bar presence (requirement)**
+
+When openstream is opened, it **adds an icon to the macOS top menu bar** (the status area next to Wi-Fi, battery and so on). The menu bar is the app's only visible surface. There's no Dock icon and no main window.
+
+- Built with SwiftUI `MenuBarExtra` (macOS 13+) and `LSUIElement = YES`, so the app has no Dock icon and doesn't show in the Cmd-Tab app switcher.
+- The icon appears **as soon as the app launches**, whether started by hand, by the first-run onboarding or by launch at login. It stays until the user quits from the menu.
+- Icon: a monochrome template image, so macOS tints it correctly in light and dark mode. When openstream is paused, the icon shows a dimmed or crossed-out state.
+- Clicking the icon opens the menu:
+  - status line: "Active: Spotify → Tidal" or "Paused"
+  - **Pause / Resume**
+  - **Recent conversions** (last 10). Clicking one opens it again, with an "Open original link" option
+  - **Preferred service**: Apple Music / Tidal
+  - **Real browser**: the browser that ordinary links are forwarded to
+  - **Launch at login** toggle
+  - **Settings…**, **About**, **Quit openstream**
+- Launching the app again while it's already running doesn't add a second icon.
+- If openstream isn't the default browser yet, the menu shows a warning item ("Not active: set openstream as default browser") that leads to the onboarding.
 
 **Key Info.plist entries**
 - `CFBundleURLTypes`: `http`, `https`, `spotify`
@@ -253,6 +274,7 @@ Swift: openstream.app
 
 ### Phase 1 — MVP menu bar app (1–2 weeks)
 - [ ] Xcode project, menu bar app shell, Info.plist URL/document types.
+- [ ] Menu bar icon appears in the top menu bar on launch (`MenuBarExtra`, no Dock icon). See "Menu bar presence" in §3.
 - [ ] Onboarding: pick the preferred service and the real browser, then set openstream as the default browser.
 - [ ] `URLRouter` + `BrowserForwarder` (pass-through must be solid before anything else).
 - [ ] `SpotifyLinkParser` with unit tests for every URL format in §2.3, including short links.
