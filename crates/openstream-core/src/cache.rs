@@ -7,6 +7,7 @@ use rusqlite::{params, Connection, OptionalExtension};
 
 use crate::link::SpotifyLink;
 use crate::resolve::Conversion;
+use crate::reverse::SpotifyShare;
 use crate::target::Service;
 
 /// Catalogs change (regional availability, re-releases), so entries expire.
@@ -16,6 +17,8 @@ const MAX_AGE_SECS: i64 = 30 * 24 * 60 * 60;
 /// v2: Tidal/Apple Music prefer the original release over compilations (ticket 0002).
 const TABLE: &str = "conversions_v2";
 const OLD_TABLES: &[&str] = &["conversions"];
+/// Spotify links for songs played elsewhere ("Copy Spotify Link"), exact matches only.
+const SHARE_TABLE: &str = "spotify_links_v1";
 
 pub(crate) struct Cache {
     conn: Connection,
@@ -47,6 +50,11 @@ impl Cache {
                 conversion   TEXT NOT NULL,
                 created_at   INTEGER NOT NULL,
                 PRIMARY KEY (spotify_kind, spotify_id, service, country)
+            );
+            CREATE TABLE IF NOT EXISTS {SHARE_TABLE} (
+                song       TEXT PRIMARY KEY,
+                share      TEXT NOT NULL,
+                created_at INTEGER NOT NULL
             );"
         ))?;
         Ok(Self { conn })
@@ -101,6 +109,33 @@ impl Cache {
     }
 }
 
+impl Cache {
+    /// `song` identifies the song played elsewhere (normalized artist and title).
+    pub fn get_share(&self, song: &str) -> Option<SpotifyShare> {
+        let json: Option<String> = self
+            .conn
+            .query_row(
+                &format!("SELECT share FROM {SHARE_TABLE} WHERE song = ?1 AND created_at > ?2"),
+                params![song, now() - MAX_AGE_SECS],
+                |row| row.get(0),
+            )
+            .optional()
+            .ok()
+            .flatten();
+        json.and_then(|j| serde_json::from_str(&j).ok())
+    }
+
+    pub fn put_share(&self, song: &str, share: &SpotifyShare) {
+        let Ok(json) = serde_json::to_string(share) else {
+            return;
+        };
+        let _ = self.conn.execute(
+            &format!("INSERT OR REPLACE INTO {SHARE_TABLE} VALUES (?1, ?2, ?3)"),
+            params![song, json, now()],
+        );
+    }
+}
+
 fn now() -> i64 {
     SystemTime::now()
         .duration_since(UNIX_EPOCH)
@@ -139,5 +174,20 @@ mod tests {
         assert_eq!(cache.get(&link, Service::Tidal, "DE"), Some(conversion));
         assert!(cache.get(&link, Service::Tidal, "US").is_none());
         assert!(cache.get(&link, Service::AppleMusic, "DE").is_none());
+    }
+
+    #[test]
+    fn round_trips_share_links() {
+        let cache = Cache::in_memory().unwrap();
+        let share = SpotifyShare {
+            url: "https://open.spotify.com/track/1M18Qdzl9xFVRmUm66zn34".into(),
+            exact: true,
+            title: "Yeah!".into(),
+            artist: "USHER".into(),
+            from_cache: false,
+        };
+        assert!(cache.get_share("usher\u{1f}yeah").is_none());
+        cache.put_share("usher\u{1f}yeah", &share);
+        assert_eq!(cache.get_share("usher\u{1f}yeah"), Some(share));
     }
 }

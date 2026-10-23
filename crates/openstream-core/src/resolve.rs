@@ -55,10 +55,10 @@ pub struct ResolverConfig {
 }
 
 pub struct Resolver {
-    http: Http,
+    pub(crate) http: Http,
     cache: Option<Mutex<Cache>>,
     tidal: Option<Tidal>,
-    explain: bool,
+    pub(crate) explain: bool,
 }
 
 impl Resolver {
@@ -202,7 +202,7 @@ impl Resolver {
         }))
     }
 
-    fn with_cache<T>(&self, f: impl FnOnce(&Cache) -> T) -> Option<T> {
+    pub(crate) fn with_cache<T>(&self, f: impl FnOnce(&Cache) -> T) -> Option<T> {
         let cache = self.cache.as_ref()?;
         let guard = cache.lock().unwrap_or_else(|e| e.into_inner());
         Some(f(&guard))

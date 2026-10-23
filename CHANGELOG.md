@@ -7,6 +7,8 @@
 - `openstream resolve … --explain` prints every candidate and its score.
 - **Autoplay (opt-in):** after opening the song, openstream presses its play button in Tidal (verified) or Apple Music (untested), using the Accessibility permission (ticket 0003).
 - Cache entries from earlier versions are discarded.
+- **Copy Spotify Link for Current Song** (menu, ⇧⌘C): reads the song playing in Tidal (Accessibility) or Music (AppleScript) and copies its Spotify link, found through Deezer (ISRC), MusicBrainz and Spotify's embed page; no Spotify account needed. Falls back to a Spotify search link (ticket 0009).
+- `openstream share --title … --artist …` CLI command.
 
 ## 0.1.0-alpha (unreleased)
 

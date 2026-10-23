@@ -215,11 +215,16 @@ enum TidalPage {
 
     /// Title of the track that's playing (or paused) in the player bar.
     static func nowPlayingTitle(in root: AXUIElement) -> String? {
-        guard let web = webArea(in: root),
-              let footer = AX.find(in: web, maxDepth: 6, where: { $0.domID == "footerPlayer" }).first,
-              let content = AX.find(in: footer.element, maxDepth: 2, where: { $0.domClasses.contains(prefix: "_trackContent") }).first
+        guard let footer = footerPlayer(in: root),
+              let content = AX.find(in: footer, maxDepth: 2, where: { $0.domClasses.contains(prefix: "_trackContent") }).first
         else { return nil }
         return AX.find(in: content.element, maxDepth: 1) { $0.role == "AXLink" }.first?.description
+    }
+
+    /// The player bar at the bottom of the window.
+    static func footerPlayer(in root: AXUIElement) -> AXUIElement? {
+        guard let web = webArea(in: root) else { return nil }
+        return AX.find(in: web, maxDepth: 6, where: { $0.domID == "footerPlayer" }).first?.element
     }
 
     /// Chromium only builds the web content's tree after an assistive app asks for it

@@ -57,6 +57,7 @@ final class AppModel: ObservableObject {
             browserBundleID = Browsers.currentDefault() ?? Browsers.safari
         }
         DebugCommands.simulateClick = { [weak self] url in self?.handle(url) }
+        DebugCommands.copySpotifyLink = { [weak self] in self?.copySpotifyLink() }
         tidalAccount.onChange = { [weak self] in
             self?.resetResolver()
             self?.objectWillChange.send()
@@ -214,6 +215,49 @@ final class AppModel: ObservableObject {
             log.error("network error: \(message, privacy: .public)")
             Browsers.forward(original, to: browserBundleID)
             Notifier.post(title: "Couldn't convert the link", body: "Opened the original link instead. (\(message))")
+        }
+    }
+
+    // MARK: - Copy Spotify Link
+
+    /// Copies a Spotify link for the song playing in Tidal or Music, to share with
+    /// friends who use Spotify.
+    func copySpotifyLink() {
+        let resolver = resolver()
+        let preferred = service
+        Task.detached(priority: .userInitiated) {
+            let reading = Player.read(preferring: preferred)
+            guard case let .song(song, source) = reading else {
+                await MainActor.run { self.reportUnreadable(reading) }
+                return
+            }
+            let share = resolver.spotifyLink(nowPlaying: song)
+            DebugCommands.log("copy Spotify link from \(source): \(share.exact ? "exact" : "search") \(share.url)\(share.fromCache ? " (cached)" : "")")
+            await MainActor.run {
+                NSPasteboard.general.clearContents()
+                NSPasteboard.general.setString(share.url, forType: .string)
+                let name = "\(song.artists.first ?? share.artist) – \(share.title)"
+                if share.exact {
+                    Notifier.post(title: "Copied Spotify link", body: name)
+                } else {
+                    Notifier.post(title: "Copied Spotify search link", body: "\(name) wasn't found exactly, so the link searches Spotify for it.")
+                }
+            }
+        }
+    }
+
+    private func reportUnreadable(_ reading: Player.Reading) {
+        DebugCommands.log("copy Spotify link: \(reading)")
+        switch reading {
+        case .needsAccessibility:
+            AX.requestTrust()
+            Notifier.post(title: "Can't see what Tidal is playing", body: "openstream needs the Accessibility permission to read Tidal's player.")
+        case .tidalWindowNotVisible:
+            Notifier.post(title: "Can't see Tidal's player", body: "Tidal's window is closed or on another desktop. Show it and try again.")
+        case .needsAutomation:
+            Notifier.post(title: "Can't see what Music is playing", body: "Allow openstream to control Music in System Settings → Privacy & Security → Automation.")
+        default:
+            Notifier.post(title: "Nothing is playing", body: "Play a song in Tidal or Music first.")
         }
     }
 

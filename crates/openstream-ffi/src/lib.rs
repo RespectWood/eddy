@@ -223,6 +223,46 @@ impl Resolver {
             from_cache: c.from_cache,
         })
     }
+
+    /// A Spotify link for a song playing elsewhere: exact when found, else a Spotify
+    /// search link. Never fails. Blocking network calls: call from a background thread.
+    pub fn spotify_link(&self, now_playing: NowPlaying) -> SpotifyShare {
+        let s = self.inner.spotify_link(&core::NowPlaying {
+            title: now_playing.title,
+            artists: now_playing.artists,
+            album: now_playing.album,
+            duration_ms: now_playing.duration_ms,
+        });
+        SpotifyShare {
+            url: s.url,
+            exact: s.exact,
+            title: s.title,
+            artist: s.artist,
+            from_cache: s.from_cache,
+        }
+    }
+}
+
+// MARK: - Copy Spotify Link
+
+/// What Tidal or Music is playing.
+#[derive(Debug, Clone, uniffi::Record)]
+pub struct NowPlaying {
+    pub title: String,
+    /// Primary artist first.
+    pub artists: Vec<String>,
+    pub album: Option<String>,
+    pub duration_ms: Option<u64>,
+}
+
+#[derive(Debug, Clone, uniffi::Record)]
+pub struct SpotifyShare {
+    /// A track link, or a Spotify search link when not `exact`.
+    pub url: String,
+    pub exact: bool,
+    pub title: String,
+    pub artist: String,
+    pub from_cache: bool,
 }
 
 // MARK: - Connect Tidal

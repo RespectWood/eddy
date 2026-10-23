@@ -1,0 +1,48 @@
+{
+  "isrc": "USAR10301423",
+  "recordings": [
+    {
+      "id": "4f595ab5-18bb-4007-b17d-066a0e704234",
+      "title": "Yeah!",
+      "length": 250373,
+      "relations": [
+        {
+          "type": "free streaming",
+          "url": {
+            "resource": "https://open.spotify.com/track/1M18Qdzl9xFVRmUm66zn34"
+          }
+        },
+        {
+          "type": "free streaming",
+          "url": {
+            "resource": "https://open.spotify.com/track/5rb9QrpfcKFHM1EUbSIurX"
+          }
+        },
+        {
+          "type": "free streaming",
+          "url": {
+            "resource": "https://www.deezer.com/track/2717935882"
+          }
+        },
+        {
+          "type": "other databases",
+          "url": {
+            "resource": "https://www.offiziellecharts.de/charts/titel-details-6042"
+          }
+        },
+        {
+          "type": "streaming",
+          "url": {
+            "resource": "https://tidal.com/track/353004569"
+          }
+        }
+      ]
+    },
+    {
+      "id": "cbb7278f-17e3-4aab-8303-7002fe1b7f93",
+      "title": "Yeah!",
+      "length": 250182,
+      "relations": []
+    }
+  ]
+}

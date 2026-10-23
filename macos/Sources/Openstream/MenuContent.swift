@@ -32,6 +32,9 @@ struct MenuContent: View {
         Button(model.isDisabled ? "Enable openstream" : "Disable openstream") { model.isDisabled.toggle() }
             .keyboardShortcut("p")
 
+        Button("Copy Spotify Link for Current Song") { model.copySpotifyLink() }
+            .keyboardShortcut("c", modifiers: [.command, .shift])
+
         Menu("Recent Conversions") {
             if model.recents.isEmpty {
                 Text("None yet")

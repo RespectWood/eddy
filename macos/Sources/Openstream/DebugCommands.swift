@@ -7,6 +7,7 @@ import AppKit
 ///   openstream://debug/dump?app=tidal|music     → debug/ax-<app>.txt (the app's UI tree)
 ///   openstream://debug/autoplay?app=tidal|music&title=…&artist=…&album=…&kind=track|album&url=<opened url>
 ///   openstream://debug/click?url=<spotify link>  → handled exactly like a clicked link
+///   openstream://debug/share                     → "Copy Spotify Link for Current Song"
 ///
 /// Output and logs go to ~/Library/Application Support/openstream/debug/.
 enum DebugCommands {
@@ -14,6 +15,8 @@ enum DebugCommands {
 
     /// Set by `AppModel`: routes a URL as if the user had clicked it.
     @MainActor static var simulateClick: ((URL) -> Void)?
+    /// Set by `AppModel`: the "Copy Spotify Link for Current Song" menu item.
+    @MainActor static var copySpotifyLink: (() -> Void)?
 
     static var directory: URL {
         let dir = FileManager.default.urls(for: .applicationSupportDirectory, in: .userDomainMask)[0]
@@ -47,6 +50,11 @@ enum DebugCommands {
             guard let link = param("url").flatMap(URL.init(string:)) else { return }
             log("simulated click: \(link)")
             simulateClick?(link)
+            return
+        }
+        if url.path == "/share" {
+            log("simulated Copy Spotify Link")
+            copySpotifyLink?()
             return
         }
         guard let service = param("app").flatMap(service(named:)) else {

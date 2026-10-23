@@ -53,7 +53,9 @@ plutil -lint "$APP/Contents/Info.plist" >/dev/null
 
 DEV_IDENTITY="openstream Dev"
 if [[ -n "${SIGN_IDENTITY:-}" ]]; then
-    codesign --force --options runtime --timestamp --sign "$SIGN_IDENTITY" "$APP"
+    # The hardened runtime blocks Apple Events (reading Music) without the entitlement.
+    codesign --force --options runtime --timestamp --entitlements Resources/openstream.entitlements \
+        --sign "$SIGN_IDENTITY" "$APP"
 elif security find-certificate -c "$DEV_IDENTITY" >/dev/null 2>&1; then
     codesign --force --sign "$DEV_IDENTITY" "$APP"
 else

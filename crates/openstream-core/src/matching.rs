@@ -3,7 +3,7 @@
 use crate::spotify::SpotifyMeta;
 
 /// Minimum score for a candidate to count as the same item.
-const THRESHOLD: i32 = 70;
+pub(crate) const THRESHOLD: i32 = 70;
 
 /// A search result from another catalog, reduced to what matching needs.
 #[derive(Debug, Clone, Default)]

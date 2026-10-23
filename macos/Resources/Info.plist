@@ -29,6 +29,9 @@
 	     scripts/build-app.sh from OPENSTREAM_TIDAL_CLIENT_ID; empty disables the feature. -->
 	<key>OpenstreamTidalClientID</key>
 	<string>__TIDAL_CLIENT_ID__</string>
+	<!-- "Copy Spotify Link for Current Song" asks Music what's playing (AppleScript). -->
+	<key>NSAppleEventsUsageDescription</key>
+	<string>openstream reads the song that's playing in Music to copy a Spotify link for it.</string>
 	<key>LSApplicationCategoryType</key>
 	<string>public.app-category.music</string>
 	<key>NSHighResolutionCapable</key>

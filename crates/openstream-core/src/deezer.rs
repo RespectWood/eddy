@@ -8,7 +8,7 @@ use serde::Deserialize;
 use crate::error::ResolveError;
 use crate::http::{json, Http};
 use crate::link::SpotifyKind;
-use crate::matching::{best, normalize, Candidate};
+use crate::matching::{best, normalize, score, Candidate, THRESHOLD};
 use crate::spotify::SpotifyMeta;
 
 const API: &str = "https://api.deezer.com";
@@ -107,6 +107,48 @@ pub(crate) fn find_code(
         }
     };
     Ok(code.map(|code| DeezerMatch { code, album_title }))
+}
+
+/// ISRCs of every matching track result, best match first. A song often has several
+/// (original, remaster, single), and only some may be known elsewhere.
+pub(crate) fn find_isrcs(
+    http: &Http,
+    meta: &SpotifyMeta,
+    max: usize,
+) -> Result<Vec<String>, ResolveError> {
+    let query = format!("{} {}", meta.primary_artist(), normalize(&meta.title));
+    let response: SearchResponse = json(
+        http.get(&format!("{API}/search/track")).query("q", &query),
+        "Deezer",
+    )?;
+    let mut scored: Vec<(i32, String)> = response
+        .data
+        .into_iter()
+        .filter_map(|i| {
+            let s = score(
+                meta,
+                &Candidate {
+                    title: &i.title,
+                    artist: &i.artist.name,
+                    duration_ms: i.duration.map(|s| s * 1000),
+                    explicit: i.explicit_lyrics,
+                    ..Default::default()
+                },
+            )?;
+            Some((s, i.isrc?))
+        })
+        .filter(|(s, _)| *s >= THRESHOLD)
+        .collect();
+    // Stable, so Deezer's order decides ties.
+    scored.sort_by_key(|(s, _)| std::cmp::Reverse(*s));
+    let mut isrcs: Vec<String> = Vec::new();
+    for (_, isrc) in scored {
+        if !isrcs.contains(&isrc) {
+            isrcs.push(isrc);
+        }
+    }
+    isrcs.truncate(max);
+    Ok(isrcs)
 }
 
 #[cfg(test)]

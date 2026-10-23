@@ -189,6 +189,19 @@ One-time setup: in developer.tidal.com → your app, add the redirect URI `opens
 | L6 | Click Connect Tidal, then **Cancel** in Settings without logging in | Row goes back to "Connect Tidal", no error | |
 | L7 | Revoke openstream's access in your Tidal account settings, wait an hour (token expiry) and click a link | Search results + "Your Tidal login expired" notification; row shows **Reconnect Tidal** | |
 
+## O. Copy Spotify Link (ticket 0009)
+
+Needs the Accessibility permission (as for autoplay). Tidal's window must be on the current desktop.
+
+| # | Do this | Expected | Result |
+|---|---|---|---|
+| O1 | Play *Yeah!* in Tidal, menu → **Copy Spotify Link for Current Song**, paste into Messages | Notification "Copied Spotify link"; the pasted link opens *Yeah!* on Spotify | ✅ (clipboard verified, 2026-10-23) |
+| O2 | Same with a niche song (e.g. Robyn – Dancing On My Own) | "Copied Spotify search link"; the link opens a Spotify search for the song | |
+| O3 | Pause the song, copy again | Still copies the paused song | |
+| O4 | Close Tidal's window (or move it to another desktop), copy | "Can't see Tidal's player" notification, clipboard unchanged | |
+| O5 | Quit Tidal and Music, copy | "Nothing is playing" notification | |
+| O6 | Music playing (any song, library or catalog) | First time: macOS asks to let openstream control Music; then the link is copied | |
+
 ## J. Undo
 
 | # | Do this | Expected | Result |
