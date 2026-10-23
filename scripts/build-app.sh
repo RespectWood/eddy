@@ -1,9 +1,9 @@
 #!/usr/bin/env bash
-# Builds dist/openstream.app (and a zip of it).
+# Builds dist/Eddy.app (and a zip of it).
 #
 #   scripts/build-app.sh                  # universal build, ad-hoc signed
 #   ARCHS=arm64 scripts/build-app.sh      # Apple silicon only, faster
-#   SIGN_IDENTITY="Developer ID Application: …" NOTARY_PROFILE=openstream scripts/build-app.sh
+#   SIGN_IDENTITY="Developer ID Application: …" NOTARY_PROFILE=eddy scripts/build-app.sh
 #       # signed for distribution and notarized (profile created with `xcrun notarytool store-credentials`)
 #
 # Without SIGN_IDENTITY, a local "openstream Dev" certificate is used when present
@@ -12,7 +12,7 @@
 set -euo pipefail
 
 ROOT="$(cd "$(dirname "$0")/.." && pwd)"
-# Local, untracked settings (e.g. OPENSTREAM_TIDAL_CLIENT_ID) live in .env.
+# Local, untracked settings (e.g. EDDY_TIDAL_CLIENT_ID) live in .env.
 if [[ -f "$ROOT/.env" ]]; then
     set -a
     # shellcheck disable=SC1091
@@ -23,7 +23,7 @@ ARCHS="${ARCHS:-arm64 x86_64}"
 VERSION="$(sed -n 's/^version = "\(.*\)"/\1/p' "$ROOT/Cargo.toml" | head -1)"
 BUILD="$(git -C "$ROOT" rev-list --count HEAD 2>/dev/null || echo 1)"
 DIST="$ROOT/dist"
-APP="$DIST/openstream.app"
+APP="$DIST/Eddy.app"
 
 rust_targets=""
 for arch in $ARCHS; do
@@ -39,22 +39,23 @@ cd "$ROOT/macos"
 binaries=()
 for arch in $ARCHS; do
     swift build -c release --triple "$arch-apple-macosx13.0"
-    binaries+=("$(swift build -c release --triple "$arch-apple-macosx13.0" --show-bin-path)/Openstream")
+    binaries+=("$(swift build -c release --triple "$arch-apple-macosx13.0" --show-bin-path)/Eddy")
 done
 
 rm -rf "$APP"
 mkdir -p "$APP/Contents/MacOS" "$APP/Contents/Resources"
-lipo -create "${binaries[@]}" -output "$APP/Contents/MacOS/openstream"
-strip -x "$APP/Contents/MacOS/openstream"
+lipo -create "${binaries[@]}" -output "$APP/Contents/MacOS/Eddy"
+strip -x "$APP/Contents/MacOS/Eddy"
 sed -e "s/__VERSION__/${VERSION%%-*}/" -e "s/__BUILD__/$BUILD/" \
-    -e "s/__TIDAL_CLIENT_ID__/${OPENSTREAM_TIDAL_CLIENT_ID:-}/" \
+    -e "s/__TIDAL_CLIENT_ID__/${EDDY_TIDAL_CLIENT_ID:-}/" \
     Resources/Info.plist > "$APP/Contents/Info.plist"
 plutil -lint "$APP/Contents/Info.plist" >/dev/null
+cp Resources/AppIcon.icns "$APP/Contents/Resources/"   # from scripts/make-icon.swift
 
 DEV_IDENTITY="openstream Dev"
 if [[ -n "${SIGN_IDENTITY:-}" ]]; then
     # The hardened runtime blocks Apple Events (reading Music) without the entitlement.
-    codesign --force --options runtime --timestamp --entitlements Resources/openstream.entitlements \
+    codesign --force --options runtime --timestamp --entitlements Resources/eddy.entitlements \
         --sign "$SIGN_IDENTITY" "$APP"
 elif security find-certificate -c "$DEV_IDENTITY" >/dev/null 2>&1; then
     codesign --force --sign "$DEV_IDENTITY" "$APP"
@@ -64,7 +65,7 @@ else
 fi
 codesign --verify --strict "$APP"
 
-ZIP="$DIST/openstream-$VERSION-macos.zip"
+ZIP="$DIST/eddy-$VERSION-macos.zip"
 rm -f "$ZIP"
 ditto -c -k --keepParent "$APP" "$ZIP"
 
@@ -75,5 +76,5 @@ if [[ -n "${NOTARY_PROFILE:-}" ]]; then
     ditto -c -k --keepParent "$APP" "$ZIP"
 fi
 
-echo "Built $APP ($VERSION, $(lipo -archs "$APP/Contents/MacOS/openstream"))"
+echo "Built $APP ($VERSION, $(lipo -archs "$APP/Contents/MacOS/Eddy"))"
 echo "      $ZIP"

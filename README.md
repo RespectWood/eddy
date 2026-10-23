@@ -1,23 +1,23 @@
-# openstream
+# Eddy
 
 **Click any Spotify link, anywhere on your Mac, and it opens in your preferred streaming app.**
 
-openstream is a small macOS menu bar app for people who use Apple Music or Tidal. When a friend sends you a Spotify link, openstream finds the same track and opens it in your streaming app's desktop app instead of Spotify's web player. You don't have to search for it by hand. All other links go straight to your normal browser.
+Eddy is a small macOS menu bar app for people who use Apple Music or Tidal. When a friend sends you a Spotify link, Eddy finds the same track and opens it in your streaming app's desktop app instead of Spotify's web player. You don't have to search for it by hand. All other links go straight to your normal browser.
 
 > Status: early development. Nothing to install yet.
 
 ## How it works
 
-openstream registers as the macOS default browser and checks each clicked link locally:
+Eddy registers as the macOS default browser and checks each clicked link locally:
 
 - **Spotify link** → find the same track on your service (by title, artist and duration, or exactly by ISRC for Tidal) → open it in the native Apple Music or Tidal app
 - **Any other link** → passed straight to your real browser, with no network calls
 
 ## Architecture
 
-- `crates/openstream-core`: Rust library that parses links and resolves them across services
-- `crates/openstream-cli`: command-line tool for development and testing
-- `crates/openstream-ffi`: UniFFI bindings for Swift
+- `crates/eddy-core`: Rust library that parses links and resolves them across services
+- `crates/eddy-cli`: command-line tool for development and testing
+- `crates/eddy-ffi`: UniFFI bindings for Swift
 - `macos/`: thin Swift/SwiftUI menu bar app (SwiftPM package), connected to the core through UniFFI
 
 See [PLAN.md](PLAN.md) for the full analysis, market scan and roadmap, and [docs/tickets/](docs/tickets/) for the current work.
@@ -29,15 +29,15 @@ Requirements: macOS 13+, the [Rust toolchain](https://rustup.rs) (stable), and t
 ```sh
 cargo test                                  # unit tests (no network)
 cargo test -- --ignored                     # live tests against Spotify, iTunes, Deezer
-scripts/build-app.sh                        # → dist/openstream.app + zip (universal, ad-hoc signed)
+scripts/build-app.sh                        # → dist/Eddy.app + zip (universal, ad-hoc signed)
 ARCHS=arm64 scripts/build-app.sh            # faster, Apple silicon only
 ```
 
 Try the core without the app:
 
 ```sh
-cargo run -p openstream-cli -- parse "https://open.spotify.com/intl-de/track/4uLU6hMCjMI75M1A2tKUQC?si=x"
-cargo run -p openstream-cli -- resolve "https://open.spotify.com/track/4uLU6hMCjMI75M1A2tKUQC" --to apple-music --country DE
+cargo run -p eddy-cli -- parse "https://open.spotify.com/intl-de/track/4uLU6hMCjMI75M1A2tKUQC?si=x"
+cargo run -p eddy-cli -- resolve "https://open.spotify.com/track/4uLU6hMCjMI75M1A2tKUQC" --to apple-music --country DE
 ```
 
 For exact Tidal matches, create a free app at [developer.tidal.com](https://developer.tidal.com) and enter its client ID/secret in the app's settings (or set `TIDAL_CLIENT_ID` / `TIDAL_CLIENT_SECRET` for the CLI). Without them, Tidal opens a search instead.

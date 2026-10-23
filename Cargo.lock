@@ -318,6 +318,39 @@ dependencies = [
 ]
 
 [[package]]
+name = "eddy-cli"
+version = "0.1.0-alpha"
+dependencies = [
+ "eddy-core",
+ "serde_json",
+]
+
+[[package]]
+name = "eddy-core"
+version = "0.1.0-alpha"
+dependencies = [
+ "base64",
+ "deunicode",
+ "getrandom",
+ "rusqlite",
+ "serde",
+ "serde_json",
+ "sha2",
+ "thiserror",
+ "ureq",
+ "url",
+]
+
+[[package]]
+name = "eddy-ffi"
+version = "0.1.0-alpha"
+dependencies = [
+ "eddy-core",
+ "thiserror",
+ "uniffi",
+]
+
+[[package]]
 name = "fallible-iterator"
 version = "0.3.0"
 source = "registry+https://github.com/rust-lang/crates.io-index"
@@ -630,39 +663,6 @@ name = "once_cell_polyfill"
 version = "1.70.2"
 source = "registry+https://github.com/rust-lang/crates.io-index"
 checksum = "384b8ab6d37215f3c5301a95a4accb5d64aa607f1fcb26a11b5303878451b4fe"
-
-[[package]]
-name = "openstream-cli"
-version = "0.1.0-alpha"
-dependencies = [
- "openstream-core",
- "serde_json",
-]
-
-[[package]]
-name = "openstream-core"
-version = "0.1.0-alpha"
-dependencies = [
- "base64",
- "deunicode",
- "getrandom",
- "rusqlite",
- "serde",
- "serde_json",
- "sha2",
- "thiserror",
- "ureq",
- "url",
-]
-
-[[package]]
-name = "openstream-ffi"
-version = "0.1.0-alpha"
-dependencies = [
- "openstream-core",
- "thiserror",
- "uniffi",
-]
 
 [[package]]
 name = "paste"

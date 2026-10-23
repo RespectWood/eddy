@@ -9,14 +9,14 @@
 
 ## Problem
 
-openstream solves *receiving* Spotify links. The other half: a Tidal or Apple Music user wants to **send** a song to friends who use Spotify. Today they have to search Spotify for it themselves, or send a Tidal link their friends can't open.
+Eddy solves *receiving* Spotify links. The other half: a Tidal or Apple Music user wants to **send** a song to friends who use Spotify. Today they have to search Spotify for it themselves, or send a Tidal link their friends can't open.
 
 ## Goal
 
-A menu item **"Copy Spotify Link for Current Song"**. openstream reads what Tidal (or Music) is playing, finds the same song on Spotify, and copies the link to the clipboard. The user pastes it into Messages.
+A menu item **"Copy Spotify Link for Current Song"**. Eddy reads what Tidal (or Music) is playing, finds the same song on Spotify, and copies the link to the clipboard. The user pastes it into Messages.
 
 ```
-openstream menu
+Eddy menu
   Copy Spotify Link for Current Song     ⌘⇧C (optional global shortcut)
   → "Copied: USHER – Yeah! (feat. Lil Jon & Ludacris)"
 ```
@@ -61,8 +61,9 @@ No Spotify Web API: since March 2026 its Development Mode requires a Spotify Pre
 
 - [x] Core: `deezer::find_isrcs` (up to 3 matching ISRCs), `musicbrainz.rs` (ISRC → Spotify track IDs, 1 req/s, User-Agent, one retry on 503), `reverse.rs` (`Resolver::spotify_link`, checks candidates via the embed page and `matching`, falls back to a search link). Exact links cached for 30 days (`spotify_links_v1`).
 - [x] FFI: `NowPlaying`, `SpotifyShare`, `Resolver.spotifyLink`.
-- [x] CLI: `openstream share --title … --artist … [--duration 4:10] [--explain]`.
-- [x] App: `Player.swift` (Tidal via AX, Music via AppleScript, preferred service first), menu item **Copy Spotify Link for Current Song** (⇧⌘C while the menu is open), clipboard, notifications, `openstream://debug/share`.
+- [x] CLI: `eddy share --title … --artist … [--duration 4:10] [--explain]`.
+- [x] App: `Player.swift` (Tidal via AX, Music via AppleScript, preferred service first), menu item **Copy Spotify Link for Current Song** (⇧⌘C while the menu is open), clipboard, notifications, `eddy://debug/share`.
+- [x] Lookup starts when the menu opens, so the link is usually ready at the click. Only the click touches the clipboard; opening the menu never shows a permission prompt (Music is skipped until Automation is allowed). No background polling.
 - [x] `NSAppleEventsUsageDescription`; Apple Events entitlement for hardened-runtime (Developer ID) builds.
 - [x] Tests: recorded MusicBrainz response, search URLs, share cache; live tests (`--ignored`). Manual tests section O.
 

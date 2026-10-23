@@ -41,7 +41,7 @@ The same problem is likely on **Apple Music**: iTunes results include compilatio
 
 ### 2. Playback: out of scope
 
-Tidal's `tidal://` links can only navigate. The handler in TIDAL desktop 2.43.2 has no play command, and the web client's `/track/<id>` route has no autoplay parameter. This ticket accepts that: openstream's job is to **open the right page**. Pressing play stays with the user.
+Tidal's `tidal://` links can only navigate. The handler in TIDAL desktop 2.43.2 has no play command, and the web client's `/track/<id>` route has no autoplay parameter. This ticket accepts that: Eddy's job is to **open the right page**. Pressing play stays with the user.
 
 ### 3. Artist page: possible, but it can't highlight the song
 
@@ -50,7 +50,7 @@ Tidal's `tidal://` links can only navigate. The handler in TIDAL desktop 2.43.2 
 ## Implementation notes
 
 - **Deezer's ISRC is sometimes the wrong one.** For Rick Astley and Tones And I, Deezer only returned a reissue ISRC that exists in Tidal *only* on compilations, so ISRC lookup alone couldn't find the original. Track candidates are now **every Tidal track with the Deezer ISRC + Tidal's own search results** (`/v2/searchResults?filter[query]=…&include=tracks,tracks.albums,tracks.artists`), filtered by the title, artist and duration matching and ranked together. An exact ISRC match gets a small bonus (+10). This also makes Tidal track lookups work when Deezer finds nothing.
-- Tidal's API returns **one** track per ISRC when several ISRCs are requested, but **every** track for a single ISRC. openstream uses the single-ISRC form plus pagination (max 3 pages).
+- Tidal's API returns **one** track per ISRC when several ISRCs are requested, but **every** track for a single ISRC. Eddy uses the single-ISRC form plus pagination (max 3 pages).
 - Ranking weights (`matching::release_score`): album artist = Spotify primary artist +100 · "Various Artists" −100 · popularity × 50 · album title = Deezer album +40/+30/+15 · older release up to +5 · explicit match ±5.
 - Cost per uncached Tidal track: 1 Deezer call, 1–3 ISRC pages, 1 search, 1–3 album-artist batches. Cached for 30 days.
 - Live check over `tests/fixtures/original_releases.txt` (10 tracks × Apple Music + Tidal): all open the artist's own release.
@@ -59,7 +59,7 @@ Tidal's `tidal://` links can only navigate. The handler in TIDAL desktop 2.43.2 
 
 ### Part A: pick the original release (must)
 
-In `crates/openstream-core/src/tidal.rs`:
+In `crates/eddy-core/src/tidal.rs`:
 - [x] Request `include=albums&include=artists`. **Repeat the parameter**: a comma-separated `include=albums,artists` is rejected because the comma gets URL-encoded.
 - [x] Follow `links.next` for up to **3 pages** (60 candidates).
 - [x] Fetch album artists for the candidate albums in one batched call: `/v2/albums?filter[id]=…&include=artists`.
@@ -72,7 +72,7 @@ In `crates/openstream-core/src/tidal.rs`:
 - [x] Albums (UPC lookups) can return several editions too, so use the same ranking.
 - [x] **Apple Music:** in `itunes.rs`, penalize candidates whose `collectionArtistName` is `Various Artists`.
 - [x] **Cache:** v0.1 cached wrong picks for 30 days. Add a `schema_version` key to the cache so old entries are ignored.
-- [x] **CLI:** `openstream resolve … --explain` prints every candidate with its score, for debugging matches.
+- [x] **CLI:** `eddy resolve … --explain` prints every candidate with its score, for debugging matches.
 - [x] **Tests:** record the Tidal response for `USAR10301423` as a fixture (it contains no secrets) and assert that `11337915` wins. Add a live test behind `--ignored` that runs when `TIDAL_CLIENT_ID` is set.
 
 ### Part B: choice of landing page (should)

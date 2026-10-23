@@ -8,7 +8,7 @@
 
 ## Problem
 
-Tidal and Apple Music links can only **navigate** (see 0002). After openstream opens the right page, the user still has to press play.
+Tidal and Apple Music links can only **navigate** (see 0002). After Eddy opens the right page, the user still has to press play.
 
 ## Why there's no API for this
 
@@ -18,11 +18,11 @@ Tidal and Apple Music links can only **navigate** (see 0002). After openstream o
 
 ## Solution: press the page's play control via Accessibility
 
-After the link opens the app, openstream reads the app's accessibility tree, waits for the linked page, presses the matching **play** control and confirms in the player bar that the right song is playing. Opt-in setting: **"Start playing automatically"**. It needs the macOS **Accessibility** permission.
+After the link opens the app, Eddy reads the app's accessibility tree, waits for the linked page, presses the matching **play** control and confirms in the player bar that the right song is playing. Opt-in setting: **"Start playing automatically"**. It needs the macOS **Accessibility** permission.
 
 ### Tidal (Electron, TIDAL 2.43.2)
 
-- Web content only appears in the accessibility tree after setting `AXManualAccessibility`. In a **freshly launched** Tidal it's then only reachable *upwards*: a hit test lands inside the page and its `AXParent` chain leads to the `AXWebArea`, but the window's `AXChildren` never list it. (Once Tidal has been running a while, both directions work, which is why cold starts failed at first.) openstream tries the children first, then hit test + parents.
+- Web content only appears in the accessibility tree after setting `AXManualAccessibility`. In a **freshly launched** Tidal it's then only reachable *upwards*: a hit test lands inside the page and its `AXParent` chain leads to the `AXWebArea`, but the window's `AXChildren` never list it. (Once Tidal has been running a while, both directions work, which is why cold starts failed at first.) Eddy tries the children first, then hit test + parents.
 - Cold starts can take a while (launch + login), so autoplay waits up to 45 s.
 - **Page loaded:** the `AXWebArea` title is `"<album> / <artist> - TIDAL"`.
 - **Track link:** in `dom#=main` → `AXTable` (Tracklist) → the `AXRow` with class `_tableRowSelected_…` (the row the link highlighted) → its `AXButton` with class `_playButton_…`. The row title is checked as well.
@@ -43,10 +43,10 @@ After the link opens the app, openstream reads the app's accessibility tree, wai
 ## Development setup
 
 - **Signing:** a local self-signed "openstream Dev" certificate (login keychain) keeps the signature, and with it the Accessibility permission, stable across rebuilds. `scripts/build-app.sh` uses it automatically.
-- **Debug commands** (only with `defaults write app.openstream.mac debugCommands -bool true`):
-  - `open "openstream://debug/dump?app=tidal|music"` → `~/Library/Application Support/openstream/debug/ax-<app>.txt`
-  - `open "openstream://debug/autoplay?app=…&kind=track|album&title=…&artist=…&album=…&url=…"`
-  - `open "openstream://debug/click?url=<spotify link>"` → the full flow, as if the link had been clicked
+- **Debug commands** (only with `defaults write com.respectwood.eddy debugCommands -bool true`):
+  - `open "eddy://debug/dump?app=tidal|music"` → `~/Library/Application Support/eddy/debug/ax-<app>.txt`
+  - `open "eddy://debug/autoplay?app=…&kind=track|album&title=…&artist=…&album=…&url=…"`
+  - `open "eddy://debug/click?url=<spotify link>"` → the full flow, as if the link had been clicked
   - Each failed attempt run ends with the reason in the log, e.g. `page is "…", waiting for "<album> / …"`
   - Log: `debug/autoplay.log`
 
@@ -63,4 +63,4 @@ After the link opens the app, openstream reads the app's accessibility tree, wai
 - [x] Tidal album link plays the album.
 - [x] Only the most recent click autoplays.
 - [ ] Apple Music track and album (needs a subscription).
-- [ ] Turning autoplay on asks for the Accessibility permission; with it off, openstream never asks.
+- [ ] Turning autoplay on asks for the Accessibility permission; with it off, Eddy never asks.

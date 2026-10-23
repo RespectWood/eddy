@@ -10,7 +10,7 @@ license = "MIT OR Apache-2.0"
 publish = false
 
 [workspace.dependencies]
-openstream-core = { path = "crates/openstream-core" }
+eddy-core = { path = "crates/eddy-core" }
 serde = { version = "1", features = ["derive"] }
 serde_json = "1"
 thiserror = "1"

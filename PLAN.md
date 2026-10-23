@@ -1,4 +1,4 @@
-# openstream — Rundown, Analysis & Development Plan
+# Eddy — Rundown, Analysis & Development Plan
 
 > Status: idea / pre-MVP · Platform focus: macOS (mobile later) · Date: 2026-10-22
 
@@ -70,7 +70,7 @@ click link ──► [1] intercept ──► [2] parse ──► [3] resolve ─
 | **Direct APIs** | Spotify Web API → ISRC, then Apple Music API `GET /v1/catalog/{storefront}/songs?filter[isrc]=…`, then TIDAL API (`openapi.tidal.com`) filter by ISRC | Accurate, no middleman, full control | Needs credentials for every service. Apple Music API needs a paid Apple Developer membership and a signed developer token. Spotify has tightened Web API access several times, so current dev-mode limits need checking. |
 | **Metadata fallback** | Read `og:title` / `music:musician` meta tags from the `open.spotify.com` page, or use Spotify oEmbed, then text-search the target catalog (iTunes Search API is free and needs no auth) | Needs no Spotify credentials | Fuzzy matching. Remasters, live versions and clean vs. explicit versions get mixed up |
 
-> **Update (2026-10-22):** Odesli's keyless public API is shut down (`401 PUBLIC_API_ACCESS_DEPRECATED`). v0.1 uses free sources instead: Spotify's public embed page for metadata, the **iTunes Search API** for Apple Music (fuzzy match on title, artist and duration), and **Deezer** (ISRC/UPC) + the **official TIDAL API** (free client credentials) for exact Tidal matches. Without Tidal credentials, openstream opens a search in the Tidal app. An Odesli API key is still an option for later.
+> **Update (2026-10-22):** Odesli's keyless public API is shut down (`401 PUBLIC_API_ACCESS_DEPRECATED`). v0.1 uses free sources instead: Spotify's public embed page for metadata, the **iTunes Search API** for Apple Music (fuzzy match on title, artist and duration), and **Deezer** (ISRC/UPC) + the **official TIDAL API** (free client credentials) for exact Tidal matches. Without Tidal credentials, Eddy opens a search in the Tidal app. An Odesli API key is still an option for later.
 
 **Recommended strategy (layered):**
 1. **MVP:** use Odesli. It's quick to build and good enough to test whether the idea works.
@@ -91,7 +91,7 @@ click link ──► [1] intercept ──► [2] parse ──► [3] resolve ─
 
 **How to detect whether the app is installed:** ask LaunchServices with `NSWorkspace.shared.urlForApplication(withBundleIdentifier:)` (`com.apple.Music`, Tidal's bundle ID, which needs confirming) and `urlForApplication(toOpen:)` for the `tidal://` / `music://` schemes. Check every time a link is opened, or cache the answer and refresh it when apps are installed or removed, so a newly installed app is used right away.
 
-**Never hand an `https://` link to the system without a target app.** openstream is the default browser itself, so the link would loop back to it or end up in the web player. Always use a custom scheme (`tidal://`, `music://`) or open the URL with an explicit app (`open(_:withApplicationAt:)`).
+**Never hand an `https://` link to the system without a target app.** Eddy is the default browser itself, so the link would loop back to it or end up in the web player. Always use a custom scheme (`tidal://`, `music://`) or open the URL with an explicit app (`open(_:withApplicationAt:)`).
 
 - **Apple Music:** open the `https://music.apple.com/{storefront}/song/...` URL with `NSWorkspace.shared.open(_:withApplicationAt:configuration:)` pointed at `Music.app` (bundle `com.apple.Music`), or use the `music://` scheme. Check whether playback starts or the item is only shown. Starting playback may need AppleScript or MusicKit. The MVP only needs to show the item.
 - **Tidal:** the desktop app registers the `tidal://` scheme (e.g. `tidal://track/{id}`). The exact formats need testing. If the desktop app isn't installed, fall back to `https://tidal.com/browse/track/{id}` in the browser.
@@ -103,7 +103,7 @@ click link ──► [1] intercept ──► [2] parse ──► [3] resolve ─
 - **Playlists:** these are made by users and exist only on Spotify. Converting one means creating a copy in the user's library (needs OAuth with Apple Music/Tidal, plus matching every track one by one). This is closer to what Soundiiz and TuneMyMusic do. Defer to a later phase as an optional "Import playlist" action.
 - **Podcasts:** catalog coverage differs between services and there's no ISRC. Pass through to the browser.
 - **Spotify exclusives:** they don't exist on the other services, so use the fallback UI.
-- **Reverse direction:** Apple Music/Tidal → Spotify for friends. This is a natural extension of the same engine and fits the name "openstream".
+- **Reverse direction:** Apple Music/Tidal → Spotify for friends. This is a natural extension of the same engine and fits the name "Eddy".
 
 ### 2.7 Market scan (October 2026)
 
@@ -122,7 +122,7 @@ Existing solutions fall into five groups:
 **B. Sender-side smart links: Odesli/song.link, Songwhip, SongPort, JamShare, Annie**
 - The *sender* has to convert the link before sending it. In practice they almost never do, because Spotify's share button copies a plain `open.spotify.com` URL.
 - These make a landing page where the recipient picks a service, which is one extra click and a web page.
-- Odesli covers the most services (incl. Bandcamp, Audiomack, Amazon). That makes it a good **backend for openstream**, not a competitor.
+- Odesli covers the most services (incl. Bandcamp, Audiomack, Amazon). That makes it a good **backend for Eddy**, not a competitor.
 - Feature.fm, Linkfire, etc. are marketing tools for artists and aren't relevant here.
 
 **C. Built-in sharing from the services themselves**
@@ -151,7 +151,7 @@ Existing solutions fall into five groups:
 **Proposed USP:**
 
 > **"Click any Spotify link, anywhere on your Mac, and it plays in your app."**
-> openstream is the only receiver-side music link redirector that works at the **system level**. It works with any browser and any messaging app, and it opens the **native** Apple Music or Tidal desktop app. Set it up once and forget about it.
+> Eddy is the only receiver-side music link redirector that works at the **system level**. It works with any browser and any messaging app, and it opens the **native** Apple Music or Tidal desktop app. Set it up once and forget about it.
 
 Supporting points, in order of strength:
 
@@ -181,9 +181,9 @@ Supporting points, in order of strength:
 | Risk | Impact | Mitigation |
 |---|---|---|
 | Users don't trust a "default browser" app | Adoption | Open source, local-only URL inspection, clear privacy statement, menu bar log of what was intercepted |
-| Breaking normal browsing (slow or failed forwarding) | Very bad UX, uninstall | Forward non-music URLs immediately without network calls. Thorough testing. "Disable openstream" toggle |
+| Breaking normal browsing (slow or failed forwarding) | Very bad UX, uninstall | Forward non-music URLs immediately without network calls. Thorough testing. "Disable Eddy" toggle |
 | API access changes (Spotify especially) | Resolution breaks | Several layered resolvers, ISRC cache, Odesli fallback, metadata scraping fallback |
-| Permissions look scary: openstream is the default link handler **and** (with autoplay) has Accessibility | Trust, installs | Autoplay is opt-in, so without it openstream never asks for Accessibility. AX is used only on Tidal/Music right after a converted link. Open source; links handled locally. Ship signed with Developer ID and notarized (like Discord/Zoom), not via the App Store (sandboxed apps can't use Accessibility) |
+| Permissions look scary: Eddy is the default link handler **and** (with autoplay) has Accessibility | Trust, installs | Autoplay is opt-in, so without it Eddy never asks for Accessibility. AX is used only on Tidal/Music right after a converted link. Open source; links handled locally. Ship signed with Developer ID and notarized (like Discord/Zoom), not via the App Store (sandboxed apps can't use Accessibility) |
 | Autoplay depends on the target apps' UI (CSS class names, identifiers) | Autoplay breaks after app updates | Prefix matching, verification step, debug dump to fix quickly; core conversion keeps working without it |
 | Apple Music API cost ($99/yr developer program) | Small cost | Needed anyway for signing and notarization |
 | Odesli rate limits / ToS | MVP scaling | Request an API key, move to direct APIs in v1 |
@@ -202,12 +202,12 @@ Supporting points, in order of strength:
 **Repo layout**
 
 ```
-openstream/
+eddy/
 ├── Cargo.toml                    – Cargo workspace
 ├── crates/
-│   ├── openstream-core/          – link parser, resolvers, matching, cache (pure Rust library)
-│   ├── openstream-cli/           – `openstream parse|resolve <url>`; dev/test tool, Phase 0 helper
-│   └── openstream-ffi/           – UniFFI bindings exposing core to Swift (Phase 1)
+│   ├── eddy-core/          – link parser, resolvers, matching, cache (pure Rust library)
+│   ├── eddy-cli/           – `eddy parse|resolve <url>`; dev/test tool, Phase 0 helper
+│   └── eddy-ffi/           – UniFFI bindings exposing core to Swift (Phase 1)
 ├── macos/                        – Xcode project: Swift menu bar shell (Phase 1)
 └── docs/tickets/                 – work tickets
 ```
@@ -215,7 +215,7 @@ openstream/
 **Components**
 
 ```
-Rust: openstream-core
+Rust: eddy-core
 ├── link        – SpotifyLink parser: type + id, locale/query cleanup, `is_music_link()` (sync, no I/O)
 ├── expand      – short link expansion (spotify.link, spoti.fi)
 ├── resolve     – Resolver trait
@@ -226,7 +226,7 @@ Rust: openstream-core
 │     └── SearchFallbackResolver
 └── target      – target service URL/deep-link builders (music://, tidal://, web fallback)
 
-Swift: openstream.app
+Swift: Eddy.app
 ├── App / MenuBar UI (SwiftUI)    – status, recent conversions, pause toggle, settings
 ├── URLRouter                     – receives every http(s)/spotify: URL (kAEGetURL / onOpenURL)
 ├── BrowserForwarder              – passes non-music URLs to the user's chosen real browser
@@ -236,21 +236,21 @@ Swift: openstream.app
 
 **Menu bar presence (requirement)**
 
-When openstream is opened, it **adds an icon to the macOS top menu bar** (the status area next to Wi-Fi, battery and so on). The menu bar is the app's only visible surface. There's no Dock icon and no main window.
+When Eddy is opened, it **adds an icon to the macOS top menu bar** (the status area next to Wi-Fi, battery and so on). The menu bar is the app's only visible surface. There's no Dock icon and no main window.
 
 - Built with SwiftUI `MenuBarExtra` (macOS 13+) and `LSUIElement = YES`, so the app has no Dock icon and doesn't show in the Cmd-Tab app switcher.
 - The icon appears **as soon as the app launches**, whether started by hand, by the first-run onboarding or by launch at login. It stays until the user quits from the menu.
-- Icon: a monochrome template image, so macOS tints it correctly in light and dark mode. When openstream is disabled, the icon shows a crossed-out state.
+- Icon: a monochrome template image, so macOS tints it correctly in light and dark mode. When Eddy is disabled, the icon shows a crossed-out state.
 - Clicking the icon opens the menu:
   - status line: "Active: Spotify → Tidal" or "Disabled: links open as usual"
-  - **Disable / Enable openstream**: while disabled, Spotify links open as usual (not converted)
+  - **Disable / Enable Eddy**: while disabled, Spotify links open as usual (not converted)
   - **Recent conversions** (last 10). Clicking one opens it again, with an "Open original link" option
-  - **Preferred service**: Apple Music / Tidal
+  - **Open Spotify links in**: Apple Music / Tidal
   - **Real browser**: the browser that ordinary links are forwarded to
   - **Launch at login** toggle
-  - **Settings…**, **About**, **Quit openstream**
+  - **Settings…**, **About**, **Quit Eddy**
 - Launching the app again while it's already running doesn't add a second icon.
-- If openstream isn't the default browser yet, the menu shows a warning item ("Not active: set openstream as default browser") that leads to the onboarding.
+- If Eddy isn't the default browser yet, the menu shows a warning item ("Not active: set Eddy as default browser") that leads to the onboarding.
 
 **Key Info.plist entries**
 - `CFBundleURLTypes`: `http`, `https`, `spotify`
@@ -277,7 +277,7 @@ When openstream is opened, it **adds an icon to the macOS top menu bar** (the st
 ### Phase 1 — MVP menu bar app (1–2 weeks)
 - [ ] Xcode project, menu bar app shell, Info.plist URL/document types.
 - [ ] Menu bar icon appears in the top menu bar on launch (`MenuBarExtra`, no Dock icon). See "Menu bar presence" in §3.
-- [ ] Onboarding: pick the preferred service and the real browser, then set openstream as the default browser.
+- [ ] Onboarding: pick the preferred service and the real browser, then set Eddy as the default browser.
 - [ ] `URLRouter` + `BrowserForwarder` (pass-through must be solid before anything else).
 - [ ] `SpotifyLinkParser` with unit tests for every URL format in §2.3, including short links.
 - [ ] `OdesliResolver` + `CacheResolver`.
@@ -322,7 +322,7 @@ When openstream is opened, it **adds an icon to the macOS top menu bar** (the st
 3. Open source from day one? It helps a lot with trust for a default-browser app.
 4. Free, or a small paid utility? This affects backend costs and the need for an Odesli API key.
 5. Which "real browser" setup should be supported: one browser, or Velja-style rules?
-6. **Final name.** "openstream" is a working title. Openstream, Inc. (Openstream.ai) holds OPENSTREAM trademark filings, so it's risky for a store release. Current candidate: **Gunbu**, from *yartsa gunbu*, the Tibetan name for the caterpillar fungus. No app, brand or software of that name was found in a web and App Store search (2026-10-22). Watch out: searches for "gunbu" return gun software, and the fungus is a parasite, which is an awkward story for a default-browser app. Still to check: trademarks, domains, exact App Store and Play Store names.
+6. **Final name.** Decided 2026-10-23: **Eddy** (formerly the working title "openstream", which Openstream.ai holds trademark filings for). An Eddy is where a stream turns and flows another way, which is what the app does to a shared link. A web and App Store search found no Mac or link app of that name; an old iPhone cloud-music player called "Eddy Cloud" (2015–16) looks inactive. Still to check before a store release: trademarks (EUIPO/USPTO) and domains.
 
 ---
 
@@ -332,4 +332,4 @@ When openstream is opened, it **adds an icon to the macOS top menu bar** (the st
 - **Native-first:** 100% of conversions open in the native app when it's installed (0 cases of the web player when the app exists).
 - **Latency:** p95 < 1.5 s from click to target app showing the track.
 - **Transparency:** 0 reported cases of a normal (non-music) link being blocked or noticeably slowed.
-- **Retention:** user keeps openstream as the default browser after 30 days.
+- **Retention:** user keeps Eddy as the default browser after 30 days.

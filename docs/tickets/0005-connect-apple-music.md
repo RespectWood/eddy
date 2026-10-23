@@ -16,7 +16,7 @@ Apple Music lookups use the open **iTunes Search API** and match by title, artis
 
 ## Goal
 
-**Connect Apple Music** in Settings → Accounts (introduced in 0004). After connecting, openstream finds the **exact** recording by ISRC through Apple's official API, in the user's own storefront, and ranks releases the same way as Tidal (original album over compilations). Not connecting is always allowed: openstream then uses iTunes Search as today.
+**Connect Apple Music** in Settings → Accounts (introduced in 0004). After connecting, Eddy finds the **exact** recording by ISRC through Apple's official API, in the user's own storefront, and ranks releases the same way as Tidal (original album over compilations). Not connecting is always allowed: Eddy then uses iTunes Search as today.
 
 ```
 Settings → Accounts
@@ -25,9 +25,9 @@ Settings → Accounts
 
 ## How it works (MusicKit)
 
-Apple's **MusicKit** framework (macOS 12+) talks to the Apple Music API with a developer token that Apple **generates automatically** for apps whose App ID has the MusicKit service enabled, so there's no key or secret in the app. Connecting is a system permission prompt ("openstream would like to access Apple Music"), not a web login.
+Apple's **MusicKit** framework (macOS 12+) talks to the Apple Music API with a developer token that Apple **generates automatically** for apps whose App ID has the MusicKit service enabled, so there's no key or secret in the app. Connecting is a system permission prompt ("Eddy would like to access Apple Music"), not a web login.
 
-1. `MusicAuthorization.request()` → the system prompt. macOS keeps the status; openstream stores no tokens.
+1. `MusicAuthorization.request()` → the system prompt. macOS keeps the status; Eddy stores no tokens.
 2. **Exact matching:** `MusicCatalogResourceRequest<Song>(matching: \.isrc, equalTo: isrc)` with the ISRC from Deezer (as for Tidal); albums by UPC (`\.upc`). Rank the results with the existing release ranking (`matching::release_score`).
 3. **Storefront** (region) from `MusicDataRequest.currentCountryCode`.
 4. Open the result in Music.app as today (`music://music.apple.com/<storefront>/album/…?i=…`), so autoplay (0003) keeps working.

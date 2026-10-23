@@ -9,7 +9,7 @@
 
 ## Problem
 
-openstream converts **tracks and albums**. Everything else goes to the browser unchanged:
+Eddy converts **tracks and albums**. Everything else goes to the browser unchanged:
 - **Artist** links ("check out this band") open Spotify's web page.
 - **Playlist** links are the most-shared Spotify links after tracks, and they can't be converted at all today.
 - **Short links** (`spotify.link/…`, `spoti.fi/…`, what Spotify's Share button often copies) are implemented but have **never been tested with a real link**.
@@ -36,8 +36,8 @@ A Spotify playlist doesn't exist on Tidal or Apple Music, so there's no single p
 
 | Option | What the user gets | Effort | Notes |
 |---|---|---|---|
-| **C1. Picker window** | A small openstream window with the playlist's title and songs. Clicking a song opens it (+ autoplay); "Open all in Tidal search" fallback | Medium | No extra permissions. Metadata from the Spotify playlist embed page (verify how many tracks it lists; large playlists may be truncated) |
-| **C2. Copy into Tidal** | openstream creates a playlist with the same songs in the user's Tidal library | High | Needs a Tidal **write scope** (`playlists.write`), which new developer apps don't have (see 0004), plus per-track matching. Apple Music needs MusicKit library access (0005) |
+| **C1. Picker window** | A small Eddy window with the playlist's title and songs. Clicking a song opens it (+ autoplay); "Open all in Tidal search" fallback | Medium | No extra permissions. Metadata from the Spotify playlist embed page (verify how many tracks it lists; large playlists may be truncated) |
+| **C2. Copy into Tidal** | Eddy creates a playlist with the same songs in the user's Tidal library | High | Needs a Tidal **write scope** (`playlists.write`), which new developer apps don't have (see 0004), plus per-track matching. Apple Music needs MusicKit library access (0005) |
 | **C3. Play the first song** | Opens and plays the first matched song | Low | Misleading; rejected |
 
 **Recommendation:** C1 now, C2 as a later option once write scopes are available. Decide before Part C starts.

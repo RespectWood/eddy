@@ -5,15 +5,17 @@
 	<key>CFBundleDevelopmentRegion</key>
 	<string>en</string>
 	<key>CFBundleExecutable</key>
-	<string>openstream</string>
+	<string>Eddy</string>
+	<key>CFBundleIconFile</key>
+	<string>AppIcon</string>
 	<key>CFBundleIdentifier</key>
-	<string>app.openstream.mac</string>
+	<string>com.respectwood.eddy</string>
 	<key>CFBundleInfoDictionaryVersion</key>
 	<string>6.0</string>
 	<key>CFBundleName</key>
-	<string>openstream</string>
+	<string>Eddy</string>
 	<key>CFBundleDisplayName</key>
-	<string>openstream</string>
+	<string>Eddy</string>
 	<key>CFBundlePackageType</key>
 	<string>APPL</string>
 	<key>CFBundleShortVersionString</key>
@@ -26,19 +28,19 @@
 	<key>LSUIElement</key>
 	<true/>
 	<!-- Public OAuth client ID for "Connect Tidal" (PKCE, not a secret). Filled in by
-	     scripts/build-app.sh from OPENSTREAM_TIDAL_CLIENT_ID; empty disables the feature. -->
-	<key>OpenstreamTidalClientID</key>
+	     scripts/build-app.sh from EDDY_TIDAL_CLIENT_ID; empty disables the feature. -->
+	<key>EddyTidalClientID</key>
 	<string>__TIDAL_CLIENT_ID__</string>
 	<!-- "Copy Spotify Link for Current Song" asks Music what's playing (AppleScript). -->
 	<key>NSAppleEventsUsageDescription</key>
-	<string>openstream reads the song that's playing in Music to copy a Spotify link for it.</string>
+	<string>Eddy reads the song that's playing in Music to copy a Spotify link for it.</string>
 	<key>LSApplicationCategoryType</key>
 	<string>public.app-category.music</string>
 	<key>NSHighResolutionCapable</key>
 	<true/>
 	<key>NSHumanReadableCopyright</key>
-	<string>© 2026 The openstream contributors. MIT OR Apache-2.0.</string>
-	<!-- http/https + document types make macOS list openstream as a possible
+	<string>© 2026 The Eddy contributors. MIT OR Apache-2.0.</string>
+	<!-- http/https + document types make macOS list Eddy as a possible
 	     "default web browser", which is how it receives clicked links. -->
 	<key>CFBundleURLTypes</key>
 	<array>
@@ -65,12 +67,12 @@
 		</dict>
 		<dict>
 			<key>CFBundleURLName</key>
-			<string>openstream developer commands</string>
+			<string>Eddy developer commands</string>
 			<key>CFBundleTypeRole</key>
 			<string>Viewer</string>
 			<key>CFBundleURLSchemes</key>
 			<array>
-				<string>openstream</string>
+				<string>eddy</string>
 			</array>
 		</dict>
 	</array>
