@@ -34,7 +34,7 @@ struct MenuContent: View {
         Button("Copy Spotify Link for Current Song") { model.copySpotifyLink() }
             .keyboardShortcut("c", modifiers: [.command, .shift])
 
-        Menu("Recent Conversions") {
+        Menu("Recently Opened") {
             if model.recents.isEmpty {
                 Text("None yet")
             }

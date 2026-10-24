@@ -11,6 +11,15 @@
 - Cache entries from earlier versions are discarded.
 - **Copy Spotify Link for Current Song** (menu, ⇧⌘C): reads the song playing in Tidal (Accessibility) or Music (AppleScript) and copies its Spotify link, found through Deezer (ISRC), MusicBrainz and Spotify's embed page; no Spotify account needed. Falls back to a Spotify search link. The lookup starts when the menu opens, so the link is usually ready by the click (ticket 0009).
 - `eddy share --title … --artist …` CLI command.
+- **Security hardening** (ticket 0010):
+  - Every build is signed with the hardened runtime, so no other process can inject code into Eddy and use its Accessibility or Automation permission.
+  - The Tidal developer client secret moved from preferences to the Keychain (migrated on first launch). Keychain items stay on this Mac (not restored from backups onto another one).
+  - Debug commands need a secret token (`scripts/debug.sh`); the old `debugCommands` setting no longer does anything.
+  - A forged `eddy://auth/tidal` redirect no longer cancels a Tidal login in progress, and login errors show Eddy's own text instead of text from the redirect.
+  - Short links are always fetched over HTTPS; all network requests are HTTPS only.
+  - Clicked links are no longer written to the system log in readable form.
+  - IDs and ISRCs from API responses are checked before they go into URLs.
+  - CI: read-only token, actions pinned to commits, `cargo audit`, Dependabot.
 
 ## 0.1.0-alpha (unreleased)
 

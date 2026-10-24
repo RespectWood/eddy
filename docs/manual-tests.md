@@ -40,7 +40,7 @@ To start over with a clean first run: quit Eddy from its menu, then run
 | A2 | Same launch | The setup window opens and comes to the front | |
 | A3 | Check the icon in light and dark mode (System Settings → Appearance) | Icon is legible in both | |
 | A4 | Open the app a second time from Finder while it's running | Still **one** menu bar icon. The setup window comes to the front | |
-| A5 | Click the menu bar icon | Menu groups, divided by lines: status line, "Not active: set up Eddy…", Disable Eddy / Copy Spotify Link for Current Song, Recent Conversions / Open Spotify Links In, Start Playing Automatically / Open Other Links In, Launch at Login / Settings…, About, Quit | |
+| A5 | Click the menu bar icon | Menu groups, divided by lines: status line, "Not active: set up Eddy…", Disable Eddy / Copy Spotify Link for Current Song, Recently Opened / Open Spotify Links In, Start Playing Automatically / Open Other Links In, Launch at Login / Settings…, About, Quit | |
 
 ## B. Setup and default link handler
 
@@ -81,7 +81,7 @@ Set Open Spotify Links In → Apple Music. Test links:
 | D4 | Locale-prefix and remastered links | Correct songs | |
 | D5 | Does Music start **playing**, or only show the item? | Write down which. Either is OK for v0.1 (open question in PLAN.md) | |
 | D6 | Click the same track link again | Opens instantly (cached) | |
-| D7 | Menu → Recent Conversions | Shows "The Weeknd – Blinding Lights" etc. Clicking "Open in Apple Music" reopens it. "Open Original Link" opens the Spotify page in Firefox | |
+| D7 | Menu → Recently Opened | Shows "The Weeknd – Blinding Lights" etc. Clicking "Open in Apple Music" reopens it. "Open Original Link" opens the Spotify page in Firefox | |
 
 ## E. Spotify → Tidal
 
@@ -112,7 +112,7 @@ Set Open Spotify Links In → Tidal. Deep link formats were checked against Tida
 | E8 | Click `https://open.spotify.com/track/5rb9QrpfcKFHM1EUbSIurX` (USHER – Yeah!) | Tidal opens **Confessions (Expanded Edition)** with the song highlighted, not a "Various Artists" compilation | |
 | E9 | Click `https://open.spotify.com/track/4uLU6hMCjMI75M1A2tKUQC` (Rick Astley) | Opens **Whenever You Need Somebody** | |
 | E10 | Menu → **Show Artist Page Instead of Song** on, click the Usher link again | Tidal opens **Usher's artist page**. Turn it off afterwards | |
-| E11 | Menu → Recent Conversions | Shows the conversions. "Open in Tidal" reopens the same page as the original click | |
+| E11 | Menu → Recently Opened | Shows the conversions. "Open in Tidal" reopens the same page as the original click | |
 
 ## F. Other Spotify links and fallbacks
 
@@ -173,7 +173,7 @@ Menu → **Start Playing Automatically** on. macOS asks for the Accessibility pe
 | K6 | Apple Music (needs a subscription): Open Spotify Links In → Apple Music, click the Usher link | Music opens the album and *Yeah!* plays. The pointer jumps to the row for a moment and comes back | |
 | K7 | Autoplay off | Nothing plays, no permission prompt | |
 
-If something fails: `~/Library/Application Support/eddy/debug/autoplay.log` (with debug commands enabled) shows each attempt.
+If something fails: `~/Library/Application Support/eddy/debug/autoplay.log` shows each attempt once debug commands are enabled (`scripts/debug.sh` enables them on first use; `scripts/debug.sh off` disables them).
 
 ## L. Connect Tidal (ticket 0004)
 

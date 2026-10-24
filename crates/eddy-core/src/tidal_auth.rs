@@ -124,24 +124,47 @@ pub fn login_request(client_id: &str, redirect_uri: &str, scopes: &str) -> Login
     }
 }
 
+/// Whether `callback_url` answers this login (its `state` matches). Any web page can
+/// open `eddy://auth/tidal`, so the app ignores redirects that don't match and keeps
+/// waiting for the real one. No network.
+pub fn callback_matches(request: &LoginRequest, callback_url: &str) -> bool {
+    Url::parse(callback_url)
+        .is_ok_and(|url| query_param(&url, "state").as_deref() == Some(request.state.as_str()))
+}
+
 /// Reads the code from the redirect Tidal sent back. Pure, so it's unit-tested.
+///
+/// `state` is checked before anything else, including `error`: an unchecked error
+/// would let any web page end the login with a message of its choosing.
 pub fn code_from_callback(request: &LoginRequest, callback_url: &str) -> Result<String, AuthError> {
     let url = Url::parse(callback_url).map_err(|_| AuthError::MissingCode)?;
-    let param = |name: &str| {
-        url.query_pairs()
-            .find(|(k, _)| k == name)
-            .map(|(_, v)| v.into_owned())
-    };
-    if let Some(error) = param("error") {
-        let description = param("error_description").unwrap_or_default();
-        return Err(AuthError::Denied(
-            format!("{error} {description}").trim().to_string(),
-        ));
-    }
-    if param("state").as_deref() != Some(request.state.as_str()) {
+    if query_param(&url, "state").as_deref() != Some(request.state.as_str()) {
         return Err(AuthError::StateMismatch);
     }
-    param("code").ok_or(AuthError::MissingCode)
+    if let Some(error) = query_param(&url, "error") {
+        // Our own text: `error_description` is shown in the app, so it isn't trusted.
+        return Err(AuthError::Denied(describe_oauth_error(&error).to_string()));
+    }
+    query_param(&url, "code").ok_or(AuthError::MissingCode)
+}
+
+fn query_param(url: &Url, name: &str) -> Option<String> {
+    url.query_pairs()
+        .find(|(k, _)| k == name)
+        .map(|(_, v)| v.into_owned())
+}
+
+/// The OAuth error codes of RFC 6749, section 4.1.2.1.
+fn describe_oauth_error(code: &str) -> &'static str {
+    match code {
+        "access_denied" => "the login was cancelled",
+        "temporarily_unavailable" | "server_error" => "Tidal's login is unavailable right now",
+        "invalid_scope"
+        | "unauthorized_client"
+        | "unsupported_response_type"
+        | "invalid_request" => "Tidal rejected this app's login request",
+        _ => "Tidal didn't accept the login",
+    }
 }
 
 /// Completes a login: exchanges the code for tokens and reads the profile.
@@ -328,9 +351,7 @@ mod tests {
         );
         assert_eq!(
             code_from_callback(&request, &denied),
-            Err(AuthError::Denied(
-                "access_denied User cancelled".to_string()
-            ))
+            Err(AuthError::Denied("the login was cancelled".to_string()))
         );
 
         let no_code = format!("eddy://auth/tidal?state={}", request.state);
@@ -338,6 +359,37 @@ mod tests {
             code_from_callback(&request, &no_code),
             Err(AuthError::MissingCode)
         );
+    }
+
+    #[test]
+    fn forged_errors_are_rejected() {
+        let request = login_request("c", "eddy://auth/tidal", DEFAULT_SCOPES);
+        for forged in [
+            "eddy://auth/tidal?error=access_denied&error_description=Call+us".to_string(),
+            "eddy://auth/tidal?error=access_denied&state=someone-else".to_string(),
+        ] {
+            assert!(!callback_matches(&request, &forged), "{forged}");
+            assert_eq!(
+                code_from_callback(&request, &forged),
+                Err(AuthError::StateMismatch)
+            );
+        }
+        let real = format!("eddy://auth/tidal?code=abc&state={}", request.state);
+        assert!(callback_matches(&request, &real));
+        assert!(!callback_matches(&request, "not a url"));
+    }
+
+    #[test]
+    fn error_descriptions_are_not_shown() {
+        let request = login_request("c", "eddy://auth/tidal", DEFAULT_SCOPES);
+        let url = format!(
+            "eddy://auth/tidal?error=made_up&error_description=Call+1-800&state={}",
+            request.state
+        );
+        let Err(AuthError::Denied(message)) = code_from_callback(&request, &url) else {
+            panic!("expected Denied");
+        };
+        assert!(!message.contains("1-800"), "{message}");
     }
 
     #[test]

@@ -45,7 +45,7 @@ A Spotify playlist doesn't exist on Tidal or Apple Music, so there's no single p
 C1 details:
 - Spotify playlist embed page → playlist name, owner, track list (title, artists, duration).
 - Window lists the tracks; matching each one runs **lazily** (on click, or in the background for the first ~10) to stay within Tidal's usage limits and the cache.
-- Window remembers the last few playlists (menu → Recent Conversions).
+- Window remembers the last few playlists (menu → Recently Opened).
 
 ## Part D: everything else
 

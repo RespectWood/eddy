@@ -36,7 +36,7 @@ enum TargetApps {
         // launched it and opens it when its window is ready. A second copy sent during
         // startup froze Tidal.
         NSWorkspace.shared.open([native], withApplicationAt: appURL, configuration: configuration) { _, error in
-            if let error { log.error("opening \(nativeURL, privacy: .public) failed: \(error.localizedDescription, privacy: .public)") }
+            if let error { log.error("opening \(nativeURL, privacy: .private) failed: \(error.localizedDescription, privacy: .public)") }
         }
         return .native
     }

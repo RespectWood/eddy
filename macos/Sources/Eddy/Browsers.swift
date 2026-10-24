@@ -50,7 +50,7 @@ enum Browsers {
         let workspace = NSWorkspace.shared
         let candidates = [bundleID, safari].compactMap { $0 }.filter { $0 != Bundle.main.bundleIdentifier }
         guard let appURL = candidates.lazy.compactMap({ workspace.urlForApplication(withBundleIdentifier: $0) }).first else {
-            log.error("no browser to forward \(url.absoluteString, privacy: .public) to")
+            log.error("no browser to forward \(url.absoluteString, privacy: .private) to")
             return
         }
         workspace.open([url], withApplicationAt: appURL, configuration: NSWorkspace.OpenConfiguration())

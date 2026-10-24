@@ -13,21 +13,33 @@ pub(crate) const BROWSER_USER_AGENT: &str =
 #[derive(Clone)]
 pub(crate) struct Http {
     agent: ureq::Agent,
+    /// Returns redirects instead of following them, so the caller can check each hop.
+    manual: ureq::Agent,
 }
 
 impl Http {
     pub fn new() -> Self {
-        let agent = ureq::AgentBuilder::new()
-            .timeout_connect(Duration::from_secs(4))
-            .timeout(Duration::from_secs(10))
-            .redirects(5)
-            .user_agent(USER_AGENT)
-            .build();
-        Self { agent }
+        let builder = || {
+            ureq::AgentBuilder::new()
+                // Every API is HTTPS; this also refuses redirects to plain HTTP.
+                .https_only(true)
+                .timeout_connect(Duration::from_secs(4))
+                .timeout(Duration::from_secs(10))
+                .user_agent(USER_AGENT)
+        };
+        Self {
+            agent: builder().redirects(5).build(),
+            manual: builder().redirects(0).build(),
+        }
     }
 
     pub fn get(&self, url: &str) -> ureq::Request {
         self.agent.get(url)
+    }
+
+    /// A GET whose 3xx response is returned as is.
+    pub fn get_without_redirects(&self, url: &str) -> ureq::Request {
+        self.manual.get(url)
     }
 
     pub fn post(&self, url: &str) -> ureq::Request {

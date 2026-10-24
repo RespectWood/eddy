@@ -1,8 +1,10 @@
 import AppKit
 
-/// Developer commands, sent as `eddy://debug/…` URLs (e.g. with `open` in Terminal).
-/// Off unless enabled with `defaults write com.respectwood.eddy debugCommands -bool true`,
-/// so a web page can't trigger them.
+/// Developer commands, sent as `eddy://debug/…?token=<token>` URLs (`scripts/debug.sh`
+/// adds the token and calls `open`). Off unless a token is set with
+/// `defaults write com.respectwood.eddy debugToken <random>`, and only accepted with
+/// that token: Eddy is the default browser, so any web page can open `eddy://` URLs,
+/// but no web page can read the user's defaults.
 ///
 ///   eddy://debug/dump?app=tidal|music     → debug/ax-<app>.txt (the app's UI tree)
 ///   eddy://debug/autoplay?app=tidal|music&title=…&artist=…&album=…&kind=track|album&url=<opened url>
@@ -12,7 +14,14 @@ import AppKit
 ///
 /// Output and logs go to ~/Library/Application Support/eddy/debug/.
 enum DebugCommands {
-    static var isEnabled: Bool { UserDefaults.standard.bool(forKey: "debugCommands") }
+    /// Shorter tokens are ignored, so a guessable one can't enable the commands.
+    private static let minTokenLength = 16
+
+    private static var token: String? {
+        UserDefaults.standard.string(forKey: "debugToken").flatMap { $0.count >= minTokenLength ? $0 : nil }
+    }
+
+    static var isEnabled: Bool { token != nil }
 
     /// Set by `AppModel`: routes a URL as if the user had clicked it.
     @MainActor static var simulateClick: ((URL) -> Void)?
@@ -43,12 +52,11 @@ enum DebugCommands {
     }
 
     @MainActor static func handle(_ url: URL) {
-        guard isEnabled else {
-            log("ignored (debug commands disabled): \(url)")
-            return
-        }
         let query = URLComponents(url: url, resolvingAgainstBaseURL: false)?.queryItems ?? []
         let param = { (name: String) in query.first { $0.name == name }?.value }
+        // Without the right token, nothing happens and nothing is logged: the URL may
+        // come from a web page.
+        guard let token, let given = param("token"), constantTimeEqual(given, token) else { return }
         if url.path == "/click" {
             guard let link = param("url").flatMap(URL.init(string:)) else { return }
             log("simulated click: \(link)")
@@ -85,6 +93,13 @@ enum DebugCommands {
         default:
             log("unknown command \(url.path)")
         }
+    }
+
+    /// Takes as long whether the tokens differ early or late.
+    private static func constantTimeEqual(_ a: String, _ b: String) -> Bool {
+        let (x, y) = (Array(a.utf8), Array(b.utf8))
+        guard x.count == y.count else { return false }
+        return zip(x, y).reduce(0) { $0 | ($1.0 ^ $1.1) } == 0
     }
 
     private static func service(named name: String) -> Service? {

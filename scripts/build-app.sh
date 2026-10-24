@@ -46,24 +46,32 @@ rm -rf "$APP"
 mkdir -p "$APP/Contents/MacOS" "$APP/Contents/Resources"
 lipo -create "${binaries[@]}" -output "$APP/Contents/MacOS/Eddy"
 strip -x "$APP/Contents/MacOS/Eddy"
-sed -e "s/__VERSION__/${VERSION%%-*}/" -e "s/__BUILD__/$BUILD/" \
-    -e "s/__TIDAL_CLIENT_ID__/${EDDY_TIDAL_CLIENT_ID:-}/" \
-    Resources/Info.plist > "$APP/Contents/Info.plist"
-plutil -lint "$APP/Contents/Info.plist" >/dev/null
+# plutil, not sed: the values are written as plain strings, whatever characters they hold.
+PLIST="$APP/Contents/Info.plist"
+cp Resources/Info.plist "$PLIST"
+plutil -replace CFBundleShortVersionString -string "${VERSION%%-*}" "$PLIST"
+plutil -replace CFBundleVersion -string "$BUILD" "$PLIST"
+plutil -replace EddyTidalClientID -string "${EDDY_TIDAL_CLIENT_ID:-}" "$PLIST"
+plutil -lint "$PLIST" >/dev/null
 cp Resources/AppIcon.icns "$APP/Contents/Resources/"   # from scripts/make-icon.swift
 
+# Every build gets the hardened runtime: without it, any local process can inject a
+# library (DYLD_INSERT_LIBRARIES) and inherit Eddy's Accessibility and Automation
+# permissions. The runtime blocks Apple Events (reading Music) without the entitlement.
 DEV_IDENTITY="openstream Dev"
+sign=(codesign --force --options runtime --entitlements Resources/eddy.entitlements)
 if [[ -n "${SIGN_IDENTITY:-}" ]]; then
-    # The hardened runtime blocks Apple Events (reading Music) without the entitlement.
-    codesign --force --options runtime --timestamp --entitlements Resources/eddy.entitlements \
-        --sign "$SIGN_IDENTITY" "$APP"
+    "${sign[@]}" --timestamp --sign "$SIGN_IDENTITY" "$APP"
 elif security find-certificate -c "$DEV_IDENTITY" >/dev/null 2>&1; then
-    codesign --force --sign "$DEV_IDENTITY" "$APP"
+    "${sign[@]}" --sign "$DEV_IDENTITY" "$APP"
 else
     # Ad-hoc signature: runs locally; testers must right-click → Open the first time.
-    codesign --force --sign - "$APP"
+    "${sign[@]}" --sign - "$APP"
 fi
 codesign --verify --strict "$APP"
+# Fail the build rather than ship without the hardened runtime.
+signature="$(codesign -dv "$APP" 2>&1)"
+[[ "$signature" == *"(runtime)"* ]] || { echo "hardened runtime missing" >&2; exit 1; }
 
 ZIP="$DIST/eddy-$VERSION-macos.zip"
 rm -f "$ZIP"

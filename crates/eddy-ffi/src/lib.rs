@@ -376,18 +376,30 @@ pub fn tidal_login_request(client_id: String, redirect_uri: String) -> TidalLogi
     }
 }
 
+impl From<TidalLoginRequest> for core::tidal_auth::LoginRequest {
+    fn from(r: TidalLoginRequest) -> Self {
+        Self {
+            authorize_url: r.authorize_url,
+            client_id: r.client_id,
+            redirect_uri: r.redirect_uri,
+            state: r.state,
+            code_verifier: r.code_verifier,
+        }
+    }
+}
+
+/// Whether a redirect belongs to this login. Any web page can open the redirect URI,
+/// so others are ignored. No network.
+#[uniffi::export]
+pub fn tidal_callback_matches(request: TidalLoginRequest, callback_url: String) -> bool {
+    core::tidal_auth::callback_matches(&request.into(), &callback_url)
+}
+
 /// Completes a login with the URL Tidal redirected to. Blocking network call.
 #[uniffi::export]
 pub fn tidal_finish_login(
     request: TidalLoginRequest,
     callback_url: String,
 ) -> Result<TidalTokens, TidalLoginError> {
-    let request = core::tidal_auth::LoginRequest {
-        authorize_url: request.authorize_url,
-        client_id: request.client_id,
-        redirect_uri: request.redirect_uri,
-        state: request.state,
-        code_verifier: request.code_verifier,
-    };
-    Ok(core::tidal_auth::finish_login(&request, &callback_url)?.into())
+    Ok(core::tidal_auth::finish_login(&request.into(), &callback_url)?.into())
 }

@@ -94,17 +94,21 @@ final class TidalAccount: ObservableObject {
         onChange?()
     }
 
-    /// `eddy://auth/tidal?…` from the browser. Ignored unless a login is in progress.
+    /// `eddy://auth/tidal?…` from the browser. Ignored unless it answers the login in
+    /// progress: any web page can open this URL, and a forged one must not end the login.
     func handleRedirect(_ url: URL) {
         guard let request = pending else {
             DebugCommands.log("Tidal login: redirect ignored (no login in progress)")
             return
         }
+        guard tidalCallbackMatches(request: request, callbackUrl: url.absoluteString) else {
+            DebugCommands.log("Tidal login: redirect ignored (state doesn't match this login)")
+            return
+        }
         // Log the outcome, never the code.
         let items = URLComponents(url: url, resolvingAgainstBaseURL: false)?.queryItems ?? []
         let error = items.first { $0.name == "error" }?.value
-        let description = items.first { $0.name == "error_description" }?.value
-        DebugCommands.log("Tidal login: redirect received (\(error.map { "error \($0) \(description ?? "")" } ?? "code"))")
+        DebugCommands.log("Tidal login: redirect received (\(error.map { "error \($0)" } ?? "code"))")
         pending = nil
         NSApp.activate(ignoringOtherApps: true)
         Task.detached(priority: .userInitiated) {

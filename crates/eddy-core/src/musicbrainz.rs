@@ -49,7 +49,11 @@ struct RelationUrl {
 /// Spotify track IDs linked to recordings with this ISRC, without duplicates, in
 /// MusicBrainz's order. Empty when the ISRC or its links are unknown.
 pub(crate) fn spotify_track_ids(http: &Http, isrc: &str) -> Result<Vec<String>, ResolveError> {
-    let url = format!("{API}/isrc/{isrc}");
+    // The ISRC comes from an API response and goes into the URL path.
+    if !is_isrc(isrc) {
+        return Ok(Vec::new());
+    }
+    let url = format!("{API}/isrc/{}", isrc.to_ascii_uppercase());
     let mut retried = false;
     let body = loop {
         throttle();
@@ -88,6 +92,15 @@ fn parse_track_ids(body: &str) -> Vec<String> {
     ids
 }
 
+/// `CC XXX YY NNNNN`: country, registrant (letters or digits), year and number.
+fn is_isrc(code: &str) -> bool {
+    let b = code.as_bytes();
+    b.len() == 12
+        && b[..2].iter().all(u8::is_ascii_alphabetic)
+        && b[2..5].iter().all(u8::is_ascii_alphanumeric)
+        && b[5..].iter().all(u8::is_ascii_digit)
+}
+
 fn throttle() {
     let mut last = LAST_REQUEST.lock().unwrap_or_else(|e| e.into_inner());
     if let Some(previous) = *last {
@@ -117,6 +130,22 @@ mod tests {
     fn ignores_unknown_or_broken_responses() {
         assert!(parse_track_ids("{}").is_empty());
         assert!(parse_track_ids("not json").is_empty());
+    }
+
+    #[test]
+    fn checks_isrc_format() {
+        assert!(is_isrc("USAR10301423"));
+        assert!(is_isrc("gbum71029604"));
+        for bad in [
+            "",
+            "USAR1030142",
+            "USAR103014234",
+            "US-AR1-03-01423",
+            "../../x/123456",
+            "1SAR10301423",
+        ] {
+            assert!(!is_isrc(bad), "{bad:?}");
+        }
     }
 
     /// Hits the real MusicBrainz API: `cargo test -- --ignored`.

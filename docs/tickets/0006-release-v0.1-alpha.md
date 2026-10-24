@@ -5,7 +5,7 @@
 | **Status** | Open |
 | **Phase** | 1 (closes it) |
 | **Estimate** | ½–1 day, plus fixes for whatever the manual tests turn up |
-| **Depends on** | 0001–0004 |
+| **Depends on** | 0001–0004, 0010 (items 1–2) |
 
 ## Goal
 
@@ -31,7 +31,7 @@ Turn what's on `main` into a **tagged, stable version** to use every day before 
 - [ ] `CHANGELOG.md`: move "Unreleased" into `0.1.0-alpha` with the date; add a **Known limitations** list (Apple Music autoplay untested, Spotify links inside the browser not caught (0007), artist/playlist links not converted (0008), Tidal development-mode limits).
 - [ ] README: an **Install** section (download the zip, move to Applications, first-run steps: default browser, Connect Tidal, optional Accessibility for autoplay) and a short **Uninstall** section (set the default browser back first).
 - [ ] Ticket statuses: 0001–0004 updated to their final state.
-- [ ] Turn off the developer settings on the release build path: `debugCommands` stays opt-in (it is), and the release build doesn't depend on the local `.env` except for the public Tidal client ID.
+- [ ] Turn off the developer settings on the release build path: debug commands stay opt-in (they need the `debugToken` default, see 0010), and the release build doesn't depend on the local `.env` except for the public Tidal client ID.
 
 ### 3. Build and release
 - [ ] Universal build (`scripts/build-app.sh`).

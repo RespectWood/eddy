@@ -194,11 +194,15 @@ impl Resolver {
                 (ItemKind::Track, track)
             }
         };
-        Ok(item.map(|item| Found {
-            urls: tidal_urls(kind, &item.id),
-            artist_urls: item.artist_id.map(|id| tidal_urls(ItemKind::Artist, &id)),
-            album: item.album_title,
-            album_artist: item.album_artist,
+        Ok(item.and_then(|item| {
+            Some(Found {
+                urls: tidal_urls(kind, &item.id)?,
+                artist_urls: item
+                    .artist_id
+                    .and_then(|id| tidal_urls(ItemKind::Artist, &id)),
+                album: item.album_title,
+                album_artist: item.album_artist,
+            })
         }))
     }
 

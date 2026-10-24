@@ -60,7 +60,9 @@ impl ItemKind {
 /// with `keep_track`, so album lookups that went through a song open the album.
 pub fn apple_music_urls(web_url: &str, keep_track: bool) -> Option<TargetUrls> {
     let mut url = Url::parse(web_url).ok()?;
-    if !url.host_str()?.ends_with("music.apple.com") {
+    let host = url.host_str()?;
+    if url.scheme() != "https" || !(host == "music.apple.com" || host.ends_with(".music.apple.com"))
+    {
         return None;
     }
     url.set_host(Some("music.apple.com")).ok()?;
@@ -81,11 +83,16 @@ pub fn apple_music_urls(web_url: &str, keep_track: bool) -> Option<TargetUrls> {
     })
 }
 
-pub fn tidal_urls(kind: ItemKind, id: &str) -> TargetUrls {
-    TargetUrls {
+/// `None` unless `id` looks like a Tidal ID (digits only): it comes from an API
+/// response and goes straight into the URLs.
+pub fn tidal_urls(kind: ItemKind, id: &str) -> Option<TargetUrls> {
+    if id.is_empty() || !id.bytes().all(|b| b.is_ascii_digit()) {
+        return None;
+    }
+    Some(TargetUrls {
         native_url: format!("tidal://{}/{id}", kind.as_str()),
         web_url: format!("https://tidal.com/browse/{}/{id}", kind.as_str()),
-    }
+    })
 }
 
 /// URLs that open a search for `query` in the service. Used when there is no exact match.
@@ -162,14 +169,32 @@ mod tests {
     }
 
     #[test]
+    fn apple_music_rejects_lookalike_hosts() {
+        for url in [
+            "https://notmusic.apple.com/us/album/_/1",
+            "https://music.apple.com.example.com/us/album/_/1",
+            "http://music.apple.com/us/album/_/1",
+        ] {
+            assert!(apple_music_urls(url, true).is_none(), "{url}");
+        }
+    }
+
+    #[test]
     fn tidal_deep_links() {
-        let urls = tidal_urls(ItemKind::Track, "1234");
+        let urls = tidal_urls(ItemKind::Track, "1234").unwrap();
         assert_eq!(urls.native_url, "tidal://track/1234");
         assert_eq!(urls.web_url, "https://tidal.com/browse/track/1234");
         assert_eq!(
-            tidal_urls(ItemKind::Album, "9").native_url,
+            tidal_urls(ItemKind::Album, "9").unwrap().native_url,
             "tidal://album/9"
         );
+    }
+
+    #[test]
+    fn tidal_rejects_odd_ids() {
+        for id in ["", "12?x=1", "1/../2", "abc", "1@example.com"] {
+            assert!(tidal_urls(ItemKind::Track, id).is_none(), "{id:?}");
+        }
     }
 
     #[test]

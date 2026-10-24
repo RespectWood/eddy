@@ -13,7 +13,8 @@ final class AppModel: ObservableObject {
     @Published var isDisabled: Bool { didSet { defaults.set(isDisabled, forKey: Keys.disabled) } }
     @Published var hasCompletedOnboarding: Bool { didSet { defaults.set(hasCompletedOnboarding, forKey: Keys.onboarded) } }
     @Published var tidalClientID: String { didSet { defaults.set(tidalClientID, forKey: Keys.tidalID); resetResolver() } }
-    @Published var tidalClientSecret: String { didSet { defaults.set(tidalClientSecret, forKey: Keys.tidalSecret); resetResolver() } }
+    /// In the Keychain, not UserDefaults: preferences are readable by every process.
+    @Published var tidalClientSecret: String { didSet { Self.saveTidalSecret(tidalClientSecret); resetResolver() } }
     @Published var tidalLandingPage: TidalLandingPage { didSet { defaults.set(tidalLandingPage.rawValue, forKey: Keys.tidalLanding) } }
     /// Press play after opening the item. Needs the Accessibility permission.
     @Published var autoPlay: Bool {
@@ -36,7 +37,8 @@ final class AppModel: ObservableObject {
         static let disabled = "disabled"
         static let onboarded = "hasCompletedOnboarding"
         static let tidalID = "tidalClientID"
-        static let tidalSecret = "tidalClientSecret"
+        /// Only read to move a secret saved by older builds into the Keychain.
+        static let legacyTidalSecret = "tidalClientSecret"
         static let recents = "recents"
         static let tidalLanding = "tidalLandingPage"
         static let autoPlay = "autoPlay"
@@ -48,7 +50,7 @@ final class AppModel: ObservableObject {
         isDisabled = defaults.bool(forKey: Keys.disabled)
         hasCompletedOnboarding = defaults.bool(forKey: Keys.onboarded)
         tidalClientID = defaults.string(forKey: Keys.tidalID) ?? ""
-        tidalClientSecret = defaults.string(forKey: Keys.tidalSecret) ?? ""
+        tidalClientSecret = Self.loadTidalSecret()
         tidalLandingPage = defaults.string(forKey: Keys.tidalLanding).flatMap(TidalLandingPage.init(rawValue:)) ?? .album
         autoPlay = defaults.bool(forKey: Keys.autoPlay)
         recents = (defaults.data(forKey: Keys.recents))
@@ -63,6 +65,32 @@ final class AppModel: ObservableObject {
             self?.resetResolver()
             self?.objectWillChange.send()
         }
+    }
+
+    // MARK: - Tidal developer secret
+
+    private static let secretService = "com.respectwood.eddy.tidal-dev"
+    private static let secretAccount = "clientSecret"
+
+    private static func loadTidalSecret() -> String {
+        let defaults = UserDefaults.standard
+        if let legacy = defaults.string(forKey: Keys.legacyTidalSecret) {
+            // Only drop the plain-text copy once the Keychain has it.
+            if legacy.isEmpty || saveTidalSecret(legacy) {
+                defaults.removeObject(forKey: Keys.legacyTidalSecret)
+            }
+            return legacy
+        }
+        return Keychain.readString(service: secretService, account: secretAccount) ?? ""
+    }
+
+    @discardableResult
+    private static func saveTidalSecret(_ secret: String) -> Bool {
+        if secret.isEmpty {
+            Keychain.delete(service: secretService, account: secretAccount)
+            return true
+        }
+        return Keychain.write(Data(secret.utf8), service: secretService, account: secretAccount)
     }
 
     /// "Show Artist Page Instead of Song": Tidal tracks open on the artist's page.
@@ -143,7 +171,8 @@ final class AppModel: ObservableObject {
         // While connected, Tidal lookups use the account's country.
         let country = (service == .tidal ? tidalAccount.country : nil)
             ?? Locale.current.region?.identifier ?? "US"
-        log.info("resolving \(url.absoluteString, privacy: .public)")
+        // The URL is private: it shows what was played, and `si=` who shared it.
+        log.info("resolving a link from \(url.host ?? "?", privacy: .public): \(url.absoluteString, privacy: .private)")
         Task.detached(priority: .userInitiated) {
             let result = Result { try resolver.resolve(url: url.absoluteString, service: service, country: country) }
             await MainActor.run { self.finish(url, service: service, result: result, click: click) }
@@ -219,7 +248,8 @@ final class AppModel: ObservableObject {
             Browsers.forward(original, to: browserBundleID)
             Notifier.post(title: "Lookup limit reached", body: "\(api) is rate limiting requests. Opened the original link.")
         case let .Network(message):
-            log.error("network error: \(message, privacy: .public)")
+            // Network errors include the request URL, i.e. the song.
+            log.error("network error: \(message, privacy: .private)")
             Browsers.forward(original, to: browserBundleID)
             Notifier.post(title: "Couldn't convert the link", body: "Opened the original link instead. (\(message))")
         }
