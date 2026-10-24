@@ -59,9 +59,9 @@ Turn what's on `main` into a **tagged pre-release** that testers can install: ma
   - Fallback if the shared quota runs out: testers register their own free developer app and use its client ID (#354); needs a small change to Connect TIDAL.
 
 ### 4. Build and release
-- [ ] Universal build (`scripts/build-app.sh`) → `dist/eddy-0.1.0-beta.1-macos.zip`.
-- [ ] Tag `v0.1.0-beta.1`, push the tag.
-- [ ] GitHub **pre-release** with the zip; notes from [docs/releases/v0.1.0-beta.1.md](../releases/v0.1.0-beta.1.md).
+- [x] Universal build (`scripts/build-app.sh`) → `dist/eddy-0.1.0-beta.1-macos.zip` (5.4 MB, hardened runtime, signature checked after unzipping).
+- [x] Tag `v0.1.0-beta.1` (on `ed1868e`), pushed.
+- [x] GitHub **pre-release** with the zip; notes from [docs/releases/v0.1.0-beta.1.md](../releases/v0.1.0-beta.1.md) (published 2026-10-24; visible once the repository is public).
 
 ### 5. Optional: release automation
 - [ ] A CI job on tags that builds the zip and attaches it to the release (signing stays local until there's a Developer ID).
@@ -75,5 +75,5 @@ Turn what's on `main` into a **tagged pre-release** that testers can install: ma
 
 - [ ] Manual test results recorded; every failure fixed or ticketed.
 - [ ] Repository public, private vulnerability reporting on.
-- [ ] `v0.1.0-beta.1` tag and GitHub pre-release with the zip and release notes.
+- [x] `v0.1.0-beta.1` tag and GitHub pre-release with the zip and release notes.
 - [ ] CI green on the tagged commit.
