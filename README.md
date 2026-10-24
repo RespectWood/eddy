@@ -1,12 +1,20 @@
+<p align="center">
+  <img src="assets/brand/eddy-icon-1024.png" width="128" alt="eddy app icon">
+</p>
+
 # eddy
 
 **Click a Spotify link anywhere on your Mac, and it opens in Apple Music or TIDAL.**
+
+<!-- Demo video: upload docs/images/demo.mp4 by dragging it here in GitHub's web editor. -->
 
 A friend sends you a Spotify link in Messages, Slack or Mail. Instead of Spotify's web player, the same song opens in your own streaming app, ready to play. Every other link goes to your normal browser, untouched.
 
 > **Status: alpha.** Works daily on the developer's Mac; expect rough edges. macOS 13 or later.
 
 ## What it does
+
+<img src="docs/images/menu.png" align="right" width="300" alt="eddy's menu in the macOS menu bar">
 
 - **Spotify → Apple Music or TIDAL:** track and album links, including `spotify.link` short links and `spotify:` links, open in the Music or TIDAL app (the web player only if the app isn't installed). TIDAL matches are exact when you connect your TIDAL account; otherwise TIDAL opens a search.
 - **Copy Link for Current Song** (menu, ⇧⌘C): copies a link to the song playing in TIDAL or Music, to share with a friend. Pick TIDAL, Apple Music or Spotify from the submenu; ⇧⌘C copies one for your own service.
