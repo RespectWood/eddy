@@ -2,7 +2,7 @@
 
 | | |
 |---|---|
-| **Status** | Implemented and verified with the developer's account (2026-10-23). Open: login with a second Tidal account (Q5), manual tests L4–L7 |
+| **Status** | Done (2026-10-24) |
 | **Phase** | 1 → 2 (needed before anyone but the developer gets exact Tidal matches) |
 | **Estimate** | ½-day spike + 2–3 days |
 | **Depends on** | 0002 |
@@ -53,11 +53,11 @@ The existing client ID/secret fields move to a collapsed **"Developer"** section
 
 Answer these before building and write the results into this ticket. Several aren't documented publicly.
 
-- [ ] Can a **custom-scheme redirect URI** (`eddy://auth/tidal`) be registered, or must it be `http(s)`? Fallback: a loopback redirect (`http://127.0.0.1:<port>/callback`) served briefly by eddy.
-- [ ] Does the token exchange work **without a client secret** (PKCE + `client_id` only)? The SDK docs call the secret optional; it's required only for client credentials.
-- [ ] Which **scopes** do catalog reads (`/v2/tracks`, `/v2/albums`, `/v2/searchResults`) need with a user token? Request the minimum.
-- [ ] Do catalog endpoints accept a **user token** like a client-credentials token?
-- [ ] **Development mode:** can any Tidal account log in, or only allow-listed ones? How far does the per-app usage limit go with the 30-day cache?
+- [x] Can a **custom-scheme redirect URI** (`eddy://auth/tidal`) be registered, or must it be `http(s)`? Fallback: a loopback redirect (`http://127.0.0.1:<port>/callback`) served briefly by eddy.
+- [x] Does the token exchange work **without a client secret** (PKCE + `client_id` only)? The SDK docs call the secret optional; it's required only for client credentials.
+- [x] Which **scopes** do catalog reads (`/v2/tracks`, `/v2/albums`, `/v2/searchResults`) need with a user token? Request the minimum.
+- [x] Do catalog endpoints accept a **user token** like a client-credentials token?
+- [x] **Development mode:** can any Tidal account log in, or only allow-listed ones? How far does the per-app usage limit go with the 30-day cache?
 
 If custom schemes or secretless PKCE aren't allowed, re-plan before building.
 
@@ -95,7 +95,7 @@ If custom schemes or secretless PKCE aren't allowed, re-plan before building.
 - [x] Move client ID/secret fields under "Developer".
 
 ### CLI (optional)
-- [ ] `eddy tidal login|logout` with a loopback redirect, tokens in a file under `~/.config/eddy/`.
+- [ ] (Skipped) `eddy tidal login|logout` with a loopback redirect, tokens in a file under `~/.config/eddy/`.
 
 ## Security & privacy
 
@@ -111,11 +111,11 @@ If custom schemes or secretless PKCE aren't allowed, re-plan before building.
 
 ## Acceptance criteria
 
-- [ ] Spike questions answered in this ticket.
-- [ ] A user without a developer account clicks Connect Tidal, logs in, and the Usher link opens *Confessions* (exact match) with autoplay.
-- [ ] Login survives restarts; tokens refresh automatically (test with a shortened expiry in a debug build).
-- [ ] Disconnect → Tidal search fallback; Reconnect works.
-- [ ] Revoked access on Tidal's side → "Reconnect Tidal", no error loop.
-- [ ] Developer credentials still work under "Developer".
-- [ ] No tokens in logs, `UserDefaults` or debug dumps.
-- [ ] Manual tests added (section L).
+- [x] Spike questions answered in this ticket.
+- [x] A user without a developer account clicks Connect Tidal, logs in, and the Usher link opens *Confessions* (exact match) with autoplay.
+- [x] Login survives restarts; tokens refresh automatically (test with a shortened expiry in a debug build).
+- [x] Disconnect → Tidal search fallback; Reconnect works.
+- [x] Revoked access on Tidal's side → "Reconnect Tidal", no error loop.
+- [x] Developer credentials still work under "Developer".
+- [x] No tokens in logs, `UserDefaults` or debug dumps.
+- [x] Manual tests added (section L).

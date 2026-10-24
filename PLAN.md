@@ -209,7 +209,7 @@ eddy/
 │   ├── eddy-cli/           – `eddy parse|resolve <url>`; dev/test tool, Phase 0 helper
 │   └── eddy-ffi/           – UniFFI bindings exposing core to Swift (Phase 1)
 ├── macos/                        – Xcode project: Swift menu bar shell (Phase 1)
-└── docs/tickets/                 – work tickets
+└── docs/tickets/                 – open work tickets (finished ones in done/)
 ```
 
 **Components**
