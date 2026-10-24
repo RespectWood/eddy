@@ -99,6 +99,7 @@ Also: `https_only` on every request (all APIs are HTTPS).
 ### 8. Validate values from APIs
 - [x] `musicbrainz::spotify_track_ids`: accept only ISRCs that match `^[A-Z]{2}[A-Z0-9]{3}[0-9]{7}$`; otherwise return empty.
 - [x] `target::tidal_urls`: Tidal IDs are digits only, otherwise no match (return `None` and fall back to search).
+  Changed after reading the TIDAL API docs ("resource IDs are opaque strings"): letters, digits, `-` and `_`, at most 64 characters, so a future ID format still works while `/ ? # @ % .` stay out.
 - [x] Deezer item IDs: typed as integers (check the struct). Already `u64`.
 - [x] `apple_music_urls`: host must be `music.apple.com` or end with `.music.apple.com` (today: any host ending in `music.apple.com`).
 

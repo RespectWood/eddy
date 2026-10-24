@@ -83,10 +83,12 @@ pub fn apple_music_urls(web_url: &str, keep_track: bool) -> Option<TargetUrls> {
     })
 }
 
-/// `None` unless `id` looks like a Tidal ID (digits only): it comes from an API
-/// response and goes straight into the URLs.
+/// `None` unless `id` is safe to put into a URL as is: it comes from an API response.
+/// TIDAL calls IDs opaque strings (today they're digits, tomorrow maybe UUIDs), so any
+/// letters, digits, `-` and `_` are accepted; `/`, `?`, `#`, `@`, `%`, `.` etc. aren't.
 pub fn tidal_urls(kind: ItemKind, id: &str) -> Option<TargetUrls> {
-    if id.is_empty() || !id.bytes().all(|b| b.is_ascii_digit()) {
+    let safe = |b: u8| b.is_ascii_alphanumeric() || b == b'-' || b == b'_';
+    if id.is_empty() || id.len() > 64 || !id.bytes().all(safe) {
         return None;
     }
     Some(TargetUrls {
@@ -192,8 +194,28 @@ mod tests {
 
     #[test]
     fn tidal_rejects_odd_ids() {
-        for id in ["", "12?x=1", "1/../2", "abc", "1@example.com"] {
+        for id in [
+            "",
+            "12?x=1",
+            "1/../2",
+            "1@example.com",
+            "1%2F2",
+            "1#x",
+            "1.2",
+        ] {
             assert!(tidal_urls(ItemKind::Track, id).is_none(), "{id:?}");
+        }
+        assert!(tidal_urls(ItemKind::Track, &"1".repeat(65)).is_none());
+    }
+
+    #[test]
+    fn tidal_ids_are_opaque() {
+        for id in [
+            "136204275",
+            "8f14e45f-ceea-467f-a8f1-2c5ef1b3c7d2",
+            "abc_DEF",
+        ] {
+            assert!(tidal_urls(ItemKind::Track, id).is_some(), "{id:?}");
         }
     }
 
