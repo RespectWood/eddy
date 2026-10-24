@@ -15,7 +15,7 @@ final class TidalAccount: ObservableObject {
         case notConnected
         /// The login page is open in the browser.
         case connecting
-        case connected(name: String?, country: String?)
+        case connected(country: String?)
         /// The login expired or was revoked.
         case needsReconnect
         case failed(String)
@@ -55,7 +55,7 @@ final class TidalAccount: ObservableObject {
 
     /// The account's country, used as the lookup country while connected.
     var country: String? {
-        if case let .connected(_, country) = status { return country }
+        if case let .connected(country) = status { return country }
         return nil
     }
 
@@ -65,7 +65,7 @@ final class TidalAccount: ObservableObject {
             return
         }
         if let tokens = store.load() {
-            status = .connected(name: tokens.userName, country: tokens.country)
+            status = .connected(country: tokens.country)
         } else if status != .needsReconnect && status != .connecting {
             status = .notConnected
         }
@@ -117,8 +117,8 @@ final class TidalAccount: ObservableObject {
                 switch result {
                 case let .success(tokens):
                     self.store.save(tokens: tokens)
-                    self.status = .connected(name: tokens.userName, country: tokens.country)
-                    DebugCommands.log("Tidal login: connected (country \(tokens.country ?? "unknown"), name \(tokens.userName == nil ? "unknown" : "known"))")
+                    self.status = .connected(country: tokens.country)
+                    DebugCommands.log("Tidal login: connected (country \(tokens.country ?? "unknown"))")
                     self.onChange?()
                 case let .failure(error):
                     DebugCommands.log("Tidal login failed: \(error)")
@@ -156,7 +156,6 @@ final class KeychainTidalTokenStore: TidalTokenStore, @unchecked Sendable {
             accessToken: access,
             refreshToken: dict["refreshToken"] as? String,
             expiresAt: expiresAt,
-            userName: dict["userName"] as? String,
             country: dict["country"] as? String
         )
     }
@@ -164,7 +163,6 @@ final class KeychainTidalTokenStore: TidalTokenStore, @unchecked Sendable {
     func save(tokens: TidalTokens) {
         var dict: [String: Any] = ["accessToken": tokens.accessToken, "expiresAt": tokens.expiresAt]
         dict["refreshToken"] = tokens.refreshToken
-        dict["userName"] = tokens.userName
         dict["country"] = tokens.country
         guard let data = try? JSONSerialization.data(withJSONObject: dict) else { return }
         Keychain.write(data, service: Self.service, account: Self.account)

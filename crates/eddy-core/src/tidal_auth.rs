@@ -44,9 +44,8 @@ pub struct TidalTokens {
     pub refresh_token: Option<String>,
     /// Unix seconds.
     pub expires_at: u64,
-    /// TIDAL username for "Connected as …", from the profile (never the email).
-    pub user_name: Option<String>,
-    /// Account country, used as the lookup country.
+    /// Account country, used as the lookup country. The only profile field kept: no
+    /// username, email or name (TIDAL's developer terms ask for data minimisation).
     pub country: Option<String>,
 }
 
@@ -182,9 +181,9 @@ pub fn finish_login(request: &LoginRequest, callback_url: &str) -> Result<TidalT
         ],
     )?;
     let mut tokens = response.into_tokens(None);
-    // The profile is a nicety ("Connected as …", country); a failure doesn't fail the login.
-    if let Ok((name, country)) = profile(&http, &tokens.access_token) {
-        tokens.user_name = name;
+    // The country is a nicety (the Mac's region is the fallback); a failure doesn't
+    // fail the login.
+    if let Ok(country) = profile_country(&http, &tokens.access_token) {
         tokens.country = country;
     }
     Ok(tokens)
@@ -209,7 +208,6 @@ pub(crate) fn refresh(
     ) {
         Ok(response) => {
             let mut fresh = response.into_tokens(Some(refresh_token.clone()));
-            fresh.user_name = tokens.user_name.clone();
             fresh.country = tokens.country.clone();
             Ok(Some(fresh))
         }
@@ -238,7 +236,6 @@ impl TokenResponse {
             access_token: self.access_token,
             refresh_token: self.refresh_token.or(previous_refresh),
             expires_at: now() + self.expires_in,
-            user_name: None,
             country: None,
         }
     }
@@ -260,8 +257,8 @@ fn token_request(http: &Http, form: &[(&str, &str)]) -> Result<TokenResponse, Au
     }
 }
 
-/// (display name, country) from `/v2/users/me`.
-fn profile(http: &Http, access_token: &str) -> Result<(Option<String>, Option<String>), AuthError> {
+/// The account's country from `/v2/users/me`.
+fn profile_country(http: &Http, access_token: &str) -> Result<Option<String>, AuthError> {
     let doc: serde_json::Value = http
         .get(PROFILE_URL)
         .set("Authorization", &format!("Bearer {access_token}"))
@@ -270,16 +267,10 @@ fn profile(http: &Http, access_token: &str) -> Result<(Option<String>, Option<St
         .map_err(|e| AuthError::Network(e.to_string()))?
         .into_json()
         .map_err(|e| AuthError::Network(e.to_string()))?;
-    let attributes = &doc["data"]["attributes"];
-    let text = |key: &str| {
-        attributes[key]
-            .as_str()
-            .filter(|s| !s.is_empty())
-            .map(str::to_string)
-    };
-    // Only what "Connected as …" and lookups need: never the email address or real
-    // name (TIDAL's developer terms ask for data minimisation).
-    Ok((text("username"), text("country")))
+    Ok(doc["data"]["attributes"]["country"]
+        .as_str()
+        .filter(|s| !s.is_empty())
+        .map(str::to_string))
 }
 
 fn random_token(bytes: usize) -> String {
@@ -397,7 +388,6 @@ mod tests {
             access_token: "a".into(),
             refresh_token: None,
             expires_at: now() + 3600,
-            user_name: None,
             country: None,
         };
         assert!(tokens.is_fresh());

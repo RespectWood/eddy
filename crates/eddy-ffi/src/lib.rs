@@ -314,7 +314,6 @@ pub struct TidalTokens {
     pub refresh_token: Option<String>,
     /// Unix seconds.
     pub expires_at: u64,
-    pub user_name: Option<String>,
     pub country: Option<String>,
 }
 
@@ -324,7 +323,6 @@ impl From<core::TidalTokens> for TidalTokens {
             access_token: t.access_token,
             refresh_token: t.refresh_token,
             expires_at: t.expires_at,
-            user_name: t.user_name,
             country: t.country,
         }
     }
@@ -336,7 +334,6 @@ impl From<TidalTokens> for core::TidalTokens {
             access_token: t.access_token,
             refresh_token: t.refresh_token,
             expires_at: t.expires_at,
-            user_name: t.user_name,
             country: t.country,
         }
     }

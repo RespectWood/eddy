@@ -66,8 +66,16 @@ struct SettingsView: View {
                 Section("Accounts") {
                     TidalAccountRow(account: model.tidalAccount, browser: model.browserBundleID)
                     // Shown before signing in, as TIDAL's developer terms require.
-                    Link("What Eddy does with your TIDAL login…", destination: Self.privacyURL)
-                        .font(.caption)
+                    Link(destination: Self.privacyURL) {
+                        HStack {
+                            Text("Privacy Policy")
+                            Spacer()
+                            Image(systemName: "arrow.up.right")
+                                .foregroundStyle(.secondary)
+                        }
+                        .contentShape(Rectangle())
+                    }
+                    .buttonStyle(.plain)
                     DisclosureGroup("Developer") {
                         Text("Client ID and secret of your own app from developer.tidal.com. Used only while TIDAL isn't connected above.")
                             .font(.caption)
@@ -150,74 +158,100 @@ struct SettingsView: View {
     }
 }
 
-/// Connect / Connected as … / Disconnect for the user's Tidal login.
+/// Connect / Disconnect for the user's TIDAL login.
 struct TidalAccountRow: View {
     @ObservedObject var account: TidalAccount
     /// Where the login page opens: the user's normal browser.
     let browser: String?
 
+    /// One line like an account row in System Settings: logo and action (Disconnect
+    /// already says it's connected). A note goes below only when there's something to
+    /// explain.
     var body: some View {
-        HStack(alignment: .firstTextBaseline) {
-            VStack(alignment: .leading, spacing: 4) {
+        VStack(alignment: .leading, spacing: 6) {
+            HStack(spacing: 10) {
                 TidalBadge()
-                Text(detail)
-                    .font(.caption)
-                    .foregroundStyle(detailColor)
+                Spacer()
+                if account.status == .connecting {
+                    ProgressView().controlSize(.small)
+                }
+                action
             }
-            Spacer()
-            switch account.status {
-            case .notConfigured:
-                EmptyView()
-            case .connecting:
-                ProgressView().controlSize(.small)
-                Button("Cancel") { account.cancelConnect() }
-            case .connected:
-                Button("Disconnect") { account.disconnect() }
-            case .needsReconnect:
-                Button("Reconnect TIDAL") { account.connect(in: browser) }
-            case .notConnected, .failed:
-                Button("Connect TIDAL") { account.connect(in: browser) }
+            if let note {
+                Text(note)
+                    .font(.caption)
+                    .foregroundStyle(noteColor)
+                    .fixedSize(horizontal: false, vertical: true)
             }
         }
     }
 
-    private var detail: String {
+    @ViewBuilder private var action: some View {
         switch account.status {
+        case .notConfigured:
+            EmptyView()
+        case .connecting:
+            Button("Cancel") { account.cancelConnect() }
+        case .connected:
+            Button("Disconnect") { account.disconnect() }
+        case .needsReconnect:
+            Button("Reconnect") { account.connect(in: browser) }
+        case .notConnected, .failed:
+            Button("Connect") { account.connect(in: browser) }
+        }
+    }
+
+    private var note: String? {
+        switch account.status {
+        case .connected: nil
         case .notConfigured: "Not available in this build (no TIDAL client ID)."
         case .notConnected: "Log in once for exact matches. Without it, TIDAL shows search results."
-        case .connecting: "Log in to TIDAL in your browser. When it asks, allow it to open eddy."
-        case let .connected(name, country):
-            "Connected" + (name.map { " as \($0)" } ?? "") + (country.map { " · \($0)" } ?? "")
+        case .connecting: "Log in to TIDAL in your browser. When it asks, allow it to open Eddy."
         case .needsReconnect: "Your TIDAL login expired. Showing search results until you reconnect."
         case let .failed(message): message
         }
     }
 
-    private var detailColor: Color {
+    private var noteColor: Color {
         switch account.status {
         case .needsReconnect, .failed: .orange
-        case .connected: .green
         default: .secondary
         }
     }
 }
 
 /// TIDAL's logo, as its Design Guidelines require wherever TIDAL is used: the official
-/// horizontal logo, unaltered, white on black (dark mode) or black on white (light mode),
-/// with its clear space, linking back to TIDAL. At 40 pt the logo itself is ~14 pt tall
-/// (minimum 13 px). Only shown next to TIDAL, never next to other services.
+/// horizontal logo, unaltered, in black (light mode) or white (dark mode) on the row's
+/// own background, with its clear space, linking back to TIDAL. Only shown next to TIDAL,
+/// never next to other services.
 struct TidalBadge: View {
     @Environment(\.colorScheme) private var colorScheme
 
+    /// `tidal-logo.png`: the logo from TIDAL's Design Guidelines, white on black, with its
+    /// clear space around it (652 × 196 px; the logo starts 64 px in from each edge).
+    private static let pixelSize = CGSize(width: 652, height: 196)
+    private static let clearSpace: CGFloat = 64
+    /// The whole image, clear space included; the logo itself is then ~14 pt tall
+    /// (minimum 13 px).
+    private static let height: CGFloat = 40
+
     var body: some View {
         Link(destination: URL(string: "https://tidal.com")!) {
-            if let logo = NSImage(named: colorScheme == .dark ? "tidal-logo-dark" : "tidal-logo-light") {
-                Image(nsImage: logo)
-                    .resizable()
-                    .interpolation(.high)
-                    .aspectRatio(contentMode: .fit)
-                    .frame(height: 40)
-                    .clipShape(RoundedRectangle(cornerRadius: 4))
+            if let logo = NSImage(named: "tidal-logo") {
+                let scale = Self.height / Self.pixelSize.height
+                // The logo's shape (its white pixels) in plain black or white, so no box
+                // of the image's background shows on the row.
+                (colorScheme == .dark ? Color.white : Color.black)
+                    .frame(width: Self.pixelSize.width * scale, height: Self.height)
+                    .mask(
+                        Image(nsImage: logo)
+                            .resizable()
+                            .interpolation(.high)
+                            .luminanceToAlpha()
+                    )
+                    // The clear space stays empty but reaches into the row's margins,
+                    // so the row is as tall as the logo and it lines up with the text.
+                    .padding(-Self.clearSpace * scale)
             } else {
                 // Not bundled (e.g. `swift run`): the name, still linking back.
                 Text("TIDAL").bold()

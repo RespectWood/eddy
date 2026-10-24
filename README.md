@@ -56,7 +56,7 @@ Like any app on the internet, these services see your IP address. Ordinary (non-
 
 - Matches found, for up to 30 days, so the same link opens instantly (`~/Library/Application Support/Eddy/cache.sqlite`). Older entries are deleted.
 - Your last 10 conversions (Recently Opened) and your settings, in Eddy's preferences.
-- Your TIDAL login: access tokens, your TIDAL username and country, in the macOS Keychain, for this Mac only. Eddy never sees your password: you log in on TIDAL's own page.
+- Your TIDAL login: access tokens and your account country, in the macOS Keychain, for this Mac only. Eddy never sees your password: you log in on TIDAL's own page.
 
 **Permissions** (all optional):
 

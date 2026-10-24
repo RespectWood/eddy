@@ -25,7 +25,7 @@ Eddy is a free, open-source macOS menu bar app. When someone clicks a Spotify li
 | `GET /v2/searchResults?filter[query]=…&include=tracks…` | Find the track by artist and title when the ISRC alone isn't enough |
 | `GET /v2/albums?filter[barcodeId]=…` | Find an album by UPC |
 | `GET /v2/albums?filter[id]=…&include=artists` | Album artists, to prefer an artist's original album over compilations (batches of 20 IDs) |
-| `GET /v2/users/me` | Once after sign-in: username ("Connected as …") and country for lookups. Without the `user.read` scope this returns nothing and Eddy uses the Mac's region. Email and name are never kept |
+| `GET /v2/users/me` | Once after sign-in: the account country, for lookups. Without the `user.read` scope this returns nothing and Eddy uses the Mac's region. No other profile field is kept (no username, email or name) |
 
 ISRCs and UPCs come from Deezer's public API, matched by the Spotify title, artist and duration.
 
@@ -37,7 +37,7 @@ ISRCs and UPCs come from Deezer's public API, matched by the Spotify title, arti
 
 ## Attribution
 
-Settings → Accounts shows the official TIDAL logo (horizontal, white on black in dark mode, black on white in light mode, with the clear space from the Design Guidelines, about 14 pt tall) linking to tidal.com, only in the TIDAL account row, never next to other services. Eddy displays no TIDAL artwork or audio and doesn't alter any metadata; "TIDAL" is written in capitals throughout the app.
+Settings → Accounts shows the official TIDAL logo (horizontal, black in light mode and white in dark mode, with the clear space from the Design Guidelines, about 14 pt tall) linking to tidal.com, only in the TIDAL account row, never next to other services. Eddy displays no TIDAL artwork or audio and doesn't alter any metadata; "TIDAL" is written in capitals throughout the app.
 
 We took the logo from the Design Guidelines page. **Is there an official logo pack** (SVG or PNG, light and dark) we should use instead?
 
