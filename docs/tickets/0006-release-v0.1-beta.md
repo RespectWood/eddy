@@ -34,7 +34,7 @@ Turn what's on `main` into a **tagged pre-release** that testers can install: ma
 - [x] The empty `feat:` commit (`7243fea`) is already pushed, so it stays.
 - [x] Version `0.1.0-beta.1` in `Cargo.toml` (the app shows `0.1.0`, build number from the commit count).
 - [x] `CHANGELOG.md`: "Unreleased" became `0.1.0-beta.1`, with a **Known limitations** list.
-- [ ] `CHANGELOG.md`: put the release date in the `0.1.0-beta.1` heading when tagging.
+- [x] `CHANGELOG.md`: release date in the `0.1.0-beta.1` heading.
 - [x] README: Install, Uninstall, Privacy, status "beta".
 - [x] Ticket statuses: 0001–0004 and 0009 in `done/`.
 - [x] Release build: debug commands stay opt-in (`debugToken`, see 0010); the build only reads the public TIDAL client ID from `.env`.

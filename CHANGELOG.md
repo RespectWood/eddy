@@ -1,6 +1,6 @@
 # Changelog
 
-## 0.1.0-beta.1 (not yet released)
+## 0.1.0-beta.1 (2026-10-24)
 
 First public test release. (A `0.1.0-alpha` was planned but never released; everything below is new.)
 
