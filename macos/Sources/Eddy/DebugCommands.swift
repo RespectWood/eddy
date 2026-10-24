@@ -32,7 +32,7 @@ enum DebugCommands {
 
     static var directory: URL {
         let dir = FileManager.default.urls(for: .applicationSupportDirectory, in: .userDomainMask)[0]
-            .appendingPathComponent("Eddy/debug")
+            .appendingPathComponent("eddy/debug")
         try? FileManager.default.createDirectory(at: dir, withIntermediateDirectories: true)
         return dir
     }
@@ -123,7 +123,7 @@ enum DebugCommands {
         let name = service == .tidal ? "tidal" : "music"
         let file = directory.appendingPathComponent("ax-\(name).txt")
         guard AX.isTrusted else {
-            try? "Eddy has no Accessibility permission\n".write(to: file, atomically: true, encoding: .utf8)
+            try? "eddy has no Accessibility permission\n".write(to: file, atomically: true, encoding: .utf8)
             return
         }
         guard let app = NSRunningApplication.runningApplications(withBundleIdentifier: TargetApps.bundleID(for: service)).first else {

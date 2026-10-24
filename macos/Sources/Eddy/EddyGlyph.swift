@@ -29,7 +29,7 @@ enum EddyGlyph {
             return true
         }
         image.isTemplate = true
-        image.accessibilityDescription = "Eddy"
+        image.accessibilityDescription = "eddy"
         return image
     }
 }

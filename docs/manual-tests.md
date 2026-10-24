@@ -12,15 +12,15 @@ So you don't need to repeat these:
 - Spotify → Apple Music lookups (live): tracks (incl. "– Remastered 2011" titles) and albums.
 - Spotify → TIDAL without credentials returns a TIDAL search link (live).
 - Deezer ISRC lookup (live).
-- `Eddy.app` builds as a universal binary (arm64 + x86_64), signs ad-hoc, and launches as a background menu bar process.
+- `eddy.app` builds as a universal binary (arm64 + x86_64), signs ad-hoc, and launches as a background menu bar process.
 - Sending a Spotify link to the running app: it resolves, caches the result, saves it to recents, and Music.app launches.
 - Sending an ordinary link to the app: no crash or loop. Whether Firefox actually showed the page is test C1 below.
 
 ## Before you start
 
 ```sh
-scripts/build-app.sh                       # → dist/Eddy.app
-cp -R dist/Eddy.app /Applications/   # launch at login works best from /Applications
+scripts/build-app.sh                       # → dist/eddy.app
+cp -R dist/eddy.app /Applications/   # launch at login works best from /Applications
 ```
 
 To watch what the app does while testing, run this in a separate terminal:
@@ -29,28 +29,28 @@ To watch what the app does while testing, run this in a separate terminal:
 log stream --level info --predicate 'subsystem == "com.respectwood.eddy"'
 ```
 
-To start over with a clean first run: quit Eddy from its menu, then run
+To start over with a clean first run: quit eddy from its menu, then run
 `defaults delete com.respectwood.eddy; rm -rf ~/Library/Application\ Support/eddy`.
 
 ## A. Launch and menu bar
 
 | # | Do this | Expected | Result |
 |---|---|---|---|
-| A1 | Open `/Applications/Eddy.app` | An icon (⚠︎ circle, since it isn't set up yet) appears in the top menu bar. **No Dock icon**, not in Cmd-Tab | |
+| A1 | Open `/Applications/eddy.app` | An icon (⚠︎ circle, since it isn't set up yet) appears in the top menu bar. **No Dock icon**, not in Cmd-Tab | |
 | A2 | Same launch | The setup window opens and comes to the front | |
 | A3 | Check the icon in light and dark mode (System Settings → Appearance) | Icon is legible in both | |
 | A4 | Open the app a second time from Finder while it's running | Still **one** menu bar icon. The setup window comes to the front | |
-| A5 | Click the menu bar icon | Menu groups, divided by lines: status line, "Not active: set up Eddy…", Disable Eddy / Copy Link for Current Song ▸ (TIDAL, Apple Music, Spotify), Recently Opened / Open Spotify Links In, Start Playing Automatically / Open Other Links In, Launch at Login / Settings…, About, Quit | |
+| A5 | Click the menu bar icon | Menu groups, divided by lines: status line, "Not active: set up eddy…", Disable eddy / Copy Link for Current Song ▸ (TIDAL, Apple Music, Spotify), Recently Opened / Open Spotify Links In, Start Playing Automatically / Open Other Links In, Launch at Login / Settings…, About, Quit | |
 
 ## B. Setup and default link handler
 
 | # | Do this | Expected | Result |
 |---|---|---|---|
 | B1 | In the setup window, open "Open Spotify links in" | Apple Music and TIDAL listed. Neither says "not installed" on this Mac | |
-| B2 | "Open other links in" | Lists your browsers (Firefox, Safari, …), **not** Eddy itself. Firefox (your previous default) is preselected | |
-| B3 | Click "Use Eddy for links" | macOS asks to confirm changing the default web browser to Eddy. **Note whether it asks once or twice** (http and https are set separately) | |
-| B4 | Confirm | The window shows "Eddy receives links" ✓. The menu status changes to "Active: Spotify → …" and the icon changes to the Eddy mark (an e with an arrow) | |
-| B5 | System Settings → Desktop & Dock → Default web browser | Shows Eddy | |
+| B2 | "Open other links in" | Lists your browsers (Firefox, Safari, …), **not** eddy itself. Firefox (your previous default) is preselected | |
+| B3 | Click "Use eddy for links" | macOS asks to confirm changing the default web browser to eddy. **Note whether it asks once or twice** (http and https are set separately) | |
+| B4 | Confirm | The window shows "eddy receives links" ✓. The menu status changes to "Active: Spotify → …" and the icon changes to the eddy mark (an e with an arrow) | |
+| B5 | System Settings → Desktop & Dock → Default web browser | Shows eddy | |
 | B6 | First time a notification would be sent (or when the setup window opens) | macOS asks for notification permission. Allow it | |
 | B7 | Click "Done", then reopen via menu → Settings… | Settings are remembered | |
 
@@ -62,7 +62,7 @@ To start over with a clean first run: quit Eddy from its menu, then run
 | C2 | Click 10–20 different ordinary links from Slack, Mail and Messages | All open in Firefox, nothing lost, no lag | |
 | C3 | Change "Open other links in" to Safari, click a link | Opens in Safari | |
 | C4 | Double-click a local `.html` file in Finder | Opens in the chosen browser (or its usual app). Not lost | |
-| C5 | Click a link inside Firefox itself | Stays in Firefox, Eddy not involved (expected) | |
+| C5 | Click a link inside Firefox itself | Stays in Firefox, eddy not involved (expected) | |
 
 ## D. Spotify → Apple Music
 
@@ -122,12 +122,12 @@ Set Open Spotify Links In → TIDAL. Deep link formats were checked against TIDA
 | F2 | Podcast episode link `https://open.spotify.com/episode/512ojhOuo1ktJprKbVcKyQ` | Opens unchanged in Firefox | |
 | F3 | Artist link `https://open.spotify.com/artist/0gxyHStUsqpMadRV0Di1Qt` | Opens unchanged in Firefox (artist conversion is a later ticket) | |
 | F4 | A **real** short link: in Spotify, Share → Copy link on a song (gives `spotify.link/…` or `open.spotify.com/…`), paste it in Messages to yourself, click it | Converts like a normal track link. **Short links are untested with real data**, so this one matters | |
-| F5 | `spotify:track:0VjIjW4GlUZAMYd2vXMi3b` typed in Safari's address bar or `open` in Terminal | The Spotify app still handles these (Eddy doesn't take the `spotify:` scheme from an installed Spotify app). Expected: Spotify opens | |
+| F5 | `spotify:track:0VjIjW4GlUZAMYd2vXMi3b` typed in Safari's address bar or `open` in Terminal | The Spotify app still handles these (eddy doesn't take the `spotify:` scheme from an installed Spotify app). Expected: Spotify opens | |
 | F6 | A track that isn't on Apple Music (e.g. a Spotify-exclusive podcast song or a local indie upload) | Music opens a **search**, plus a notification "Not found on Apple Music" | |
 
 ## G. Where links come from
 
-Click a Spotify track link in each app and note whether Eddy converts it:
+Click a Spotify track link in each app and note whether eddy converts it:
 
 | # | Source | Converted? | Result |
 |---|---|---|---|
@@ -143,19 +143,19 @@ Click a Spotify track link in each app and note whether Eddy converts it:
 
 | # | Do this | Expected | Result |
 |---|---|---|---|
-| H1 | Menu → Disable Eddy | Icon dims, status says "Disabled: links open as usual". Spotify links now open in Firefox unchanged, no autoplay | |
-| H2 | Menu → Enable Eddy | Conversion works again | |
+| H1 | Menu → Disable eddy | Icon dims, status says "Disabled: links open as usual". Spotify links now open in Firefox unchanged, no autoplay | |
+| H2 | Menu → Enable eddy | Conversion works again | |
 | H3 | Menu → Open Spotify Links In → switch | Next Spotify link goes to the new service | |
 | H4 | Menu → About | About panel with name and version 0.1.0 | |
-| H5 | Menu → Quit | Icon disappears. **Note:** links then fail to open until Eddy runs again or the default browser is changed back (expected for v0.1) | |
+| H5 | Menu → Quit | Icon disappears. **Note:** links then fail to open until eddy runs again or the default browser is changed back (expected for v0.1) | |
 
 ## I. Launch at login, offline, notifications
 
 | # | Do this | Expected | Result |
 |---|---|---|---|
 | I1 | Menu → Launch at Login → on. Log out and back in (or reboot) | Menu bar icon appears automatically | |
-| I2 | System Settings → General → Login Items | Eddy listed | |
-| I3 | Wi-Fi off, click an ordinary link | Opens in Firefox (shows Firefox's offline page). No delay from Eddy | |
+| I2 | System Settings → General → Login Items | eddy listed | |
+| I3 | Wi-Fi off, click an ordinary link | Opens in Firefox (shows Firefox's offline page). No delay from eddy | |
 | I4 | Wi-Fi off, click an uncached Spotify link | Original link opens in Firefox, plus a notification "Couldn't convert the link" | |
 | I5 | Notifications from E1/F6/I4 | Appear as banners with readable text | |
 
@@ -182,12 +182,12 @@ One-time setup: in developer.tidal.com → your app, add the redirect URI `eddy:
 | # | Do this | Expected | Result |
 |---|---|---|---|
 | L1 | Settings → Accounts → **Connect TIDAL** | TIDAL's login page opens in your normal browser (already logged in if it remembers TIDAL) | |
-| L2 | Log in; allow the browser to open Eddy | Row says "Connected" (with name and country only if `user.read` is allowed for the app) | |
+| L2 | Log in; allow the browser to open eddy | Row says "Connected" (with name and country only if `user.read` is allowed for the app) | |
 | L3 | Clear the Developer client ID/secret fields, click the Usher link | Exact match (*Confessions*) and autoplay, using your login | |
-| L4 | Quit and restart Eddy | Still connected | |
+| L4 | Quit and restart eddy | Still connected | |
 | L5 | **Disconnect**, click the Usher link | TIDAL shows search results + "Connect TIDAL" notification | |
 | L6 | Click Connect TIDAL, then **Cancel** in Settings without logging in | Row goes back to "Connect TIDAL", no error | |
-| L7 | Revoke Eddy's access in your TIDAL account settings, wait an hour (token expiry) and click a link | Search results + "Your TIDAL login expired" notification; row shows **Reconnect TIDAL** | |
+| L7 | Revoke eddy's access in your TIDAL account settings, wait an hour (token expiry) and click a link | Search results + "Your TIDAL login expired" notification; row shows **Reconnect TIDAL** | |
 
 ## O. Copy Link for Current Song (ticket 0009)
 
@@ -201,7 +201,7 @@ Needs the Accessibility permission (as for autoplay). TIDAL's window must be on 
 | O4 | Close TIDAL's window (or move it to another desktop), copy | "Can't see TIDAL's player" notification, clipboard unchanged | |
 | O5 | Quit TIDAL and Music, copy | "Nothing is playing" notification | |
 | O7 | Play a song never copied before. Open the menu, wait ~2 s, click Copy | Link copied right away (log: "prefetched, ready 0.0Xs after the click"). Just opening and closing the menu leaves the clipboard unchanged | |
-| O6 | Music playing (any song, library or catalog) | First time: macOS asks to let Eddy control Music; then the link is copied | |
+| O6 | Music playing (any song, library or catalog) | First time: macOS asks to let eddy control Music; then the link is copied | |
 | O8 | Service TIDAL, TIDAL connected. Play *Yeah!*, menu → **Copy Link for Current Song → TIDAL** (⇧⌘C) | "Copied TIDAL link"; the link (`tidal.com/browse/track/…`) opens *Yeah!* | |
 | O9 | Same, **Copy Link for Current Song → Apple Music** | "Copied Apple Music link"; the link (`music.apple.com/…?i=…`) opens *Yeah!* | |
 | O10 | Disconnect TIDAL, copy the TIDAL link again | "Copied TIDAL search link"; the link opens a TIDAL search | |

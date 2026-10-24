@@ -19,7 +19,7 @@ final class SettingsWindowController {
                 backing: .buffered,
                 defer: false
             )
-            window.title = "Eddy"
+            window.title = "eddy"
             window.isReleasedWhenClosed = false
             window.contentView = NSHostingView(rootView: SettingsView(model: model) { [weak window] in window?.close() })
             window.center()
@@ -88,7 +88,7 @@ struct SettingsView: View {
 
             Section("Autoplay (optional)") {
                 Toggle("Start playing automatically", isOn: $model.autoPlay)
-                Text("Neither TIDAL nor Apple Music can start playback from a link, so Eddy presses the Play button for you once the song's page has opened. This needs the Accessibility permission, and Eddy only uses it for that one button.")
+                Text("Neither TIDAL nor Apple Music can start playback from a link, so eddy presses the Play button for you once the song's page has opened. This needs the Accessibility permission, and eddy only uses it for that one button.")
                     .font(.caption)
                     .foregroundStyle(.secondary)
                 if model.autoPlayNeedsPermission {
@@ -109,16 +109,16 @@ struct SettingsView: View {
                 }
             }
 
-            Section("3. Let Eddy receive links") {
-                Text("macOS sends clicked links to one app, which it calls the \"default web browser\". Eddy takes that slot, but it isn't a browser: it converts Spotify links and immediately passes every other link to the browser above. macOS will ask you to confirm.")
+            Section("3. Let eddy receive links") {
+                Text("macOS sends clicked links to one app, which it calls the \"default web browser\". eddy takes that slot, but it isn't a browser: it converts Spotify links and immediately passes every other link to the browser above. macOS will ask you to confirm.")
                     .font(.caption)
                     .foregroundStyle(.secondary)
                 HStack {
                     if model.isDefaultHandler {
-                        Label("Eddy receives links", systemImage: "checkmark.circle.fill")
+                        Label("eddy receives links", systemImage: "checkmark.circle.fill")
                             .foregroundStyle(.green)
                     } else {
-                        Button("Use Eddy for links") { makeDefault() }
+                        Button("Use eddy for links") { makeDefault() }
                             .disabled(model.service == nil)
                     }
                     Spacer()
@@ -206,7 +206,7 @@ struct TidalAccountRow: View {
         case .connected: nil
         case .notConfigured: "Not available in this build (no TIDAL client ID)."
         case .notConnected: "Log in once for exact matches. Without it, TIDAL shows search results."
-        case .connecting: "Log in to TIDAL in your browser. When it asks, allow it to open Eddy."
+        case .connecting: "Log in to TIDAL in your browser. When it asks, allow it to open eddy."
         case .needsReconnect: "Your TIDAL login expired. Showing search results until you reconnect."
         case let .failed(message): message
         }

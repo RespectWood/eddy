@@ -1,4 +1,4 @@
-# Eddy
+# eddy
 
 **Click a Spotify link anywhere on your Mac, and it opens in Apple Music or TIDAL.**
 
@@ -17,29 +17,29 @@ Not converted yet: artists, playlists, podcasts (they open as usual).
 
 ## Install
 
-1. Download the latest `eddy-…-macos.zip` from [Releases](https://github.com/RespectWood/eddy/releases), unzip it and move **Eddy** to Applications.
-2. Open Eddy. macOS blocks it the first time, because this alpha isn't notarized by Apple: open **System Settings → Privacy & Security**, scroll down and click **Open Anyway**.
+1. Download the latest `eddy-…-macos.zip` from [Releases](https://github.com/RespectWood/eddy/releases), unzip it and move **eddy** to Applications.
+2. Open eddy. macOS blocks it the first time, because this alpha isn't notarized by Apple: open **System Settings → Privacy & Security**, scroll down and click **Open Anyway**.
 3. In the window that appears:
    - choose **Apple Music** or **TIDAL**;
    - TIDAL: click **Connect TIDAL** and log in, for exact matches;
    - pick your normal browser;
-   - click **Use Eddy for links** and confirm.
+   - click **Use eddy for links** and confirm.
 4. Optional: turn on **Start Playing Automatically**. macOS asks for the Accessibility permission.
 
-Eddy lives in the menu bar; it has no Dock icon.
+eddy lives in the menu bar; it has no Dock icon.
 
 ## How it works
 
-macOS sends clicked links to one app, the "default web browser". Eddy takes that slot, but it isn't a browser:
+macOS sends clicked links to one app, the "default web browser". eddy takes that slot, but it isn't a browser:
 
 - **Spotify links** are looked up and opened in your streaming app.
-- **Every other link** goes straight to the browser you picked. Eddy doesn't load it, check it or keep it.
+- **Every other link** goes straight to the browser you picked. eddy doesn't load it, check it or keep it.
 
-Links you click *inside* your browser stay in the browser; Eddy only sees links from other apps.
+Links you click *inside* your browser stay in the browser; eddy only sees links from other apps.
 
 ## Privacy
 
-Eddy has no server, no account of its own, no analytics and no tracking. Nothing is ever sent to the developer.
+eddy has no server, no account of its own, no analytics and no tracking. Nothing is ever sent to the developer.
 
 **What leaves your Mac, and only when needed:**
 
@@ -48,15 +48,15 @@ Eddy has no server, no account of its own, no analytics and no tracking. Nothing
 | You click a Spotify link | Spotify (`open.spotify.com`; short links also their link service, e.g. `spotify.link`) | The link's ID, to read the song's title, artists and length |
 | Converting to Apple Music | Apple (iTunes Search API) | Artist and title, your country |
 | Converting to TIDAL | Deezer, then TIDAL | Artist and title (Deezer, for the song's ISRC code); the ISRC or a search and your country (TIDAL) |
-| Copy Link for Current Song, and when you open Eddy's menu (so your default link is ready) | Spotify links: Deezer, MusicBrainz, Spotify. Apple Music links: Apple. TIDAL links: Deezer, then TIDAL | Artist and title of the song playing, its ISRC code, your country (Apple Music, TIDAL) |
+| Copy Link for Current Song, and when you open eddy's menu (so your default link is ready) | Spotify links: Deezer, MusicBrainz, Spotify. Apple Music links: Apple. TIDAL links: Deezer, then TIDAL | Artist and title of the song playing, its ISRC code, your country (Apple Music, TIDAL) |
 
 Like any app on the internet, these services see your IP address. Ordinary (non-Spotify) links cause no network traffic at all.
 
 **What stays on your Mac:**
 
-- Matches found, for up to 30 days, so the same link opens instantly (`~/Library/Application Support/Eddy/cache.sqlite`). Older entries are deleted.
-- Your last 10 conversions (Recently Opened) and your settings, in Eddy's preferences.
-- Your TIDAL login: access tokens and your account country, in the macOS Keychain, for this Mac only. Eddy never sees your password: you log in on TIDAL's own page.
+- Matches found, for up to 30 days, so the same link opens instantly (`~/Library/Application Support/eddy/cache.sqlite`). Older entries are deleted.
+- Your last 10 conversions (Recently Opened) and your settings, in eddy's preferences.
+- Your TIDAL login: access tokens and your account country, in the macOS Keychain, for this Mac only. eddy never sees your password: you log in on TIDAL's own page.
 
 **Permissions** (all optional):
 
@@ -64,14 +64,14 @@ Like any app on the internet, these services see your IP address. Ordinary (non-
 - **Automation → Music**, asked the first time you copy a link while Music is playing: to ask Music which song is playing.
 - **Notifications**, asked when the setup window opens: to tell you when a link couldn't be matched exactly.
 
-**Disconnect TIDAL:** Settings → Accounts → **Disconnect** deletes the login from your Mac, and Eddy stops using your TIDAL account right away.
+**Disconnect TIDAL:** Settings → Accounts → **Disconnect** deletes the login from your Mac, and eddy stops using your TIDAL account right away.
 
 ## Uninstall
 
 1. If you connected TIDAL: Settings → Accounts → **Disconnect**.
 2. Set your normal browser back in **System Settings → Desktop & Dock → Default web browser**.
-3. Quit Eddy from its menu and delete it from Applications.
-4. Optional cleanup: remove Eddy under **Privacy & Security → Accessibility**, delete `~/Library/Application Support/Eddy`, and run `defaults delete com.respectwood.eddy` in Terminal to remove its settings.
+3. Quit eddy from its menu and delete it from Applications.
+4. Optional cleanup: remove eddy under **Privacy & Security → Accessibility**, delete `~/Library/Application Support/eddy`, and run `defaults delete com.respectwood.eddy` in Terminal to remove its settings.
 
 ## Building from source
 
@@ -80,7 +80,7 @@ Requirements: macOS 13+, the [Rust toolchain](https://rustup.rs) (stable), and t
 ```sh
 cargo test                                  # unit tests (no network)
 cargo test -- --ignored                     # live tests against Spotify, iTunes, Deezer
-scripts/build-app.sh                        # → dist/Eddy.app + zip (universal, hardened runtime)
+scripts/build-app.sh                        # → dist/eddy.app + zip (universal, hardened runtime)
 ARCHS=arm64 scripts/build-app.sh            # faster, Apple silicon only
 ```
 
@@ -108,7 +108,7 @@ Found a vulnerability? Please report it privately, see [SECURITY.md](SECURITY.md
 
 ## Trademarks
 
-Eddy is an independent project for personal use. It isn't affiliated with, endorsed or sponsored by Spotify, TIDAL or Apple. Their names are used only to describe which links Eddy works with; the TIDAL logo in Eddy's settings follows TIDAL's Design Guidelines.
+eddy is an independent project for personal use. It isn't affiliated with, endorsed or sponsored by Spotify, TIDAL or Apple. Their names are used only to describe which links eddy works with; the TIDAL logo in eddy's settings follows TIDAL's Design Guidelines.
 
 ## License
 

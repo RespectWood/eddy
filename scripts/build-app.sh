@@ -1,5 +1,5 @@
 #!/usr/bin/env bash
-# Builds dist/Eddy.app (and a zip of it).
+# Builds dist/eddy.app (and a zip of it).
 #
 #   scripts/build-app.sh                  # universal build, ad-hoc signed
 #   ARCHS=arm64 scripts/build-app.sh      # Apple silicon only, faster
@@ -23,7 +23,7 @@ ARCHS="${ARCHS:-arm64 x86_64}"
 VERSION="$(sed -n 's/^version = "\(.*\)"/\1/p' "$ROOT/Cargo.toml" | head -1)"
 BUILD="$(git -C "$ROOT" rev-list --count HEAD 2>/dev/null || echo 1)"
 DIST="$ROOT/dist"
-APP="$DIST/Eddy.app"
+APP="$DIST/eddy.app"
 
 rust_targets=""
 for arch in $ARCHS; do
@@ -44,8 +44,9 @@ done
 
 rm -rf "$APP"
 mkdir -p "$APP/Contents/MacOS" "$APP/Contents/Resources"
-lipo -create "${binaries[@]}" -output "$APP/Contents/MacOS/Eddy"
-strip -x "$APP/Contents/MacOS/Eddy"
+# The Swift product is "Eddy"; the app and its executable are named "eddy".
+lipo -create "${binaries[@]}" -output "$APP/Contents/MacOS/eddy"
+strip -x "$APP/Contents/MacOS/eddy"
 # plutil, not sed: the values are written as plain strings, whatever characters they hold.
 PLIST="$APP/Contents/Info.plist"
 cp Resources/Info.plist "$PLIST"
@@ -58,7 +59,7 @@ cp Resources/AppIcon.icns "$APP/Contents/Resources/"   # from scripts/make-icon.
 cp Resources/tidal-logo.png "$APP/Contents/Resources/"
 
 # Every build gets the hardened runtime: without it, any local process can inject a
-# library (DYLD_INSERT_LIBRARIES) and inherit Eddy's Accessibility and Automation
+# library (DYLD_INSERT_LIBRARIES) and inherit eddy's Accessibility and Automation
 # permissions. The runtime blocks Apple Events (reading Music) without the entitlement.
 DEV_IDENTITY="openstream Dev"
 sign=(codesign --force --options runtime --entitlements Resources/eddy.entitlements)
@@ -88,5 +89,5 @@ if [[ -n "${NOTARY_PROFILE:-}" ]]; then
     ditto -c -k --keepParent "$APP" "$ZIP"
 fi
 
-echo "Built $APP ($VERSION, $(lipo -archs "$APP/Contents/MacOS/Eddy"))"
+echo "Built $APP ($VERSION, $(lipo -archs "$APP/Contents/MacOS/eddy"))"
 echo "      $ZIP"

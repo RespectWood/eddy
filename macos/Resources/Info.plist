@@ -5,7 +5,7 @@
 	<key>CFBundleDevelopmentRegion</key>
 	<string>en</string>
 	<key>CFBundleExecutable</key>
-	<string>Eddy</string>
+	<string>eddy</string>
 	<key>CFBundleIconFile</key>
 	<string>AppIcon</string>
 	<key>CFBundleIdentifier</key>
@@ -13,9 +13,9 @@
 	<key>CFBundleInfoDictionaryVersion</key>
 	<string>6.0</string>
 	<key>CFBundleName</key>
-	<string>Eddy</string>
+	<string>eddy</string>
 	<key>CFBundleDisplayName</key>
-	<string>Eddy</string>
+	<string>eddy</string>
 	<key>CFBundlePackageType</key>
 	<string>APPL</string>
 	<key>CFBundleShortVersionString</key>
@@ -33,14 +33,14 @@
 	<string>__TIDAL_CLIENT_ID__</string>
 	<!-- "Copy Spotify Link for Current Song" asks Music what's playing (AppleScript). -->
 	<key>NSAppleEventsUsageDescription</key>
-	<string>Eddy reads the song that's playing in Music to copy a Spotify link for it.</string>
+	<string>eddy reads the song that's playing in Music to copy a link to it.</string>
 	<key>LSApplicationCategoryType</key>
 	<string>public.app-category.music</string>
 	<key>NSHighResolutionCapable</key>
 	<true/>
 	<key>NSHumanReadableCopyright</key>
-	<string>© 2026 The Eddy contributors. MIT OR Apache-2.0.</string>
-	<!-- http/https + document types make macOS list Eddy as a possible
+	<string>© 2026 The eddy contributors. MIT OR Apache-2.0.</string>
+	<!-- http/https + document types make macOS list eddy as a possible
 	     "default web browser", which is how it receives clicked links. -->
 	<key>CFBundleURLTypes</key>
 	<array>
@@ -67,7 +67,7 @@
 		</dict>
 		<dict>
 			<key>CFBundleURLName</key>
-			<string>Eddy developer commands</string>
+			<string>eddy developer commands</string>
 			<key>CFBundleTypeRole</key>
 			<string>Viewer</string>
 			<key>CFBundleURLSchemes</key>

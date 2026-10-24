@@ -1,12 +1,12 @@
 #!/usr/bin/env bash
-# Sends a developer command to the running Eddy (see macos/Sources/Eddy/DebugCommands.swift).
+# Sends a developer command to the running eddy (see macos/Sources/Eddy/DebugCommands.swift).
 #
 #   scripts/debug.sh share                 # default target; share to=spotify|music|tidal
 #   scripts/debug.sh click url=https://open.spotify.com/track/4uLU6hMCjMI75M1A2tKUQC
 #   scripts/debug.sh dump app=tidal
 #   scripts/debug.sh autoplay app=music kind=track title="Yeah!" artist=USHER url=music://…
 #
-# The first run creates the secret token that enables debug commands; Eddy ignores
+# The first run creates the secret token that enables debug commands; eddy ignores
 # `eddy://debug/…` URLs without it. `scripts/debug.sh off` removes it again.
 set -euo pipefail
 

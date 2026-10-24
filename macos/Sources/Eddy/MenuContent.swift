@@ -13,7 +13,7 @@ struct MenuBarIcon: View {
                 Image(nsImage: EddyGlyph.menuBarImage(dimmed: model.isDisabled))
             }
         }
-        .accessibilityLabel("Eddy: \(model.statusLine)")
+        .accessibilityLabel("eddy: \(model.statusLine)")
     }
 }
 
@@ -25,9 +25,9 @@ struct MenuContent: View {
     var body: some View {
         Text(model.statusLine)
         if model.service == nil || !model.isDefaultHandler {
-            Button("Not active: set up Eddy…") { settingsWindow.show() }
+            Button("Not active: set up eddy…") { settingsWindow.show() }
         }
-        Button(model.isDisabled ? "Enable Eddy" : "Disable Eddy") { model.isDisabled.toggle() }
+        Button(model.isDisabled ? "Enable eddy" : "Disable eddy") { model.isDisabled.toggle() }
             .keyboardShortcut("p")
         Divider()
 
@@ -96,11 +96,11 @@ struct MenuContent: View {
 
         Button("Settings…") { settingsWindow.show() }
             .keyboardShortcut(",")
-        Button("About Eddy") {
+        Button("About eddy") {
             NSApp.activate(ignoringOtherApps: true)
             NSApp.orderFrontStandardAboutPanel(nil)
         }
-        Button("Quit Eddy") { NSApp.terminate(nil) }
+        Button("Quit eddy") { NSApp.terminate(nil) }
             .keyboardShortcut("q")
             .onAppear {
                 // The menu is rebuilt each time it opens: a cheap moment to re-check status.

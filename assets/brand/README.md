@@ -1,6 +1,6 @@
-# Eddy brand assets
+# eddy brand assets
 
-An eddy is where a stream turns and flows another way, which is what Eddy does to a shared link. The mark is a lowercase **e** whose bar runs out as an arrow: the link, sent on to your own app.
+An eddy is where a stream turns and flows another way, which is what eddy does to a shared link. The mark is a lowercase **e** whose bar runs out as an arrow: the link, sent on to your own app.
 
 | File | Use |
 |---|---|
@@ -17,7 +17,7 @@ An eddy is where a stream turns and flows another way, which is what Eddy does t
 
 ## Wordmark
 
-Lowercase **eddy**, bold, tight letter spacing (concepts used Manrope 800). In sentences the name is written "Eddy".
+Lowercase **eddy**, bold, tight letter spacing (concepts used Manrope 800). In sentences the name is written "eddy".
 
 ## Regenerating the app icon
 

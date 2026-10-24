@@ -2,6 +2,7 @@
 
 ## Unreleased
 
+- **The name is written in lowercase: eddy.** The app is `eddy.app` (executable `eddy`), and every text in the app and the docs says eddy. Bundle ID, permissions and settings are unchanged.
 - **Renamed to Eddy** (was openstream): app Eddy.app, bundle ID `com.respectwood.eddy`, link scheme `eddy://` (Tidal redirect `eddy://auth/tidal`), crates `eddy-core` / `eddy-ffi` / `eddy-cli`, CLI `eddy`, repo RespectWood/eddy.
 - **New icon:** a lowercase e whose bar runs out as an arrow, amber and ink. App icon, plus the same mark in the menu bar (dimmed while Eddy is disabled). Sources in `assets/brand/`.
 - Tidal and Apple Music open the artist's **original release** instead of a "Various Artists" compilation that contains the same recording (ticket 0002). Tidal candidates now combine the ISRC lookup with Tidal search and are ranked by album artist, popularity and release date.

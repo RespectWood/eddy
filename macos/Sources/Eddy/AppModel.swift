@@ -340,11 +340,11 @@ final class AppModel: ObservableObject {
         switch reading {
         case .needsAccessibility:
             AX.requestTrust()
-            Notifier.post(title: "Can't see what TIDAL is playing", body: "Eddy needs the Accessibility permission to read TIDAL's player.")
+            Notifier.post(title: "Can't see what TIDAL is playing", body: "eddy needs the Accessibility permission to read TIDAL's player.")
         case .tidalWindowNotVisible:
             Notifier.post(title: "Can't see TIDAL's player", body: "TIDAL's window is closed or on another desktop. Show it and try again.")
         case .needsAutomation:
-            Notifier.post(title: "Can't see what Music is playing", body: "Allow Eddy to control Music in System Settings → Privacy & Security → Automation.")
+            Notifier.post(title: "Can't see what Music is playing", body: "Allow eddy to control Music in System Settings → Privacy & Security → Automation.")
         default:
             Notifier.post(title: "Nothing is playing", body: "Play a song in TIDAL or Music first.")
         }
@@ -397,7 +397,7 @@ final class AppModel: ObservableObject {
 
     private static var cacheURL: URL {
         FileManager.default.urls(for: .applicationSupportDirectory, in: .userDomainMask)[0]
-            .appendingPathComponent("Eddy/cache.sqlite")
+            .appendingPathComponent("eddy/cache.sqlite")
     }
 }
 
