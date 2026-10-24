@@ -1,6 +1,6 @@
 # Eddy
 
-**Click a Spotify link anywhere on your Mac, and it opens in Apple Music or Tidal.**
+**Click a Spotify link anywhere on your Mac, and it opens in Apple Music or TIDAL.**
 
 A friend sends you a Spotify link in Messages, Slack or Mail. Instead of Spotify's web player, the same song opens in your own streaming app, ready to play. Every other link goes to your normal browser, untouched.
 
@@ -8,8 +8,8 @@ A friend sends you a Spotify link in Messages, Slack or Mail. Instead of Spotify
 
 ## What it does
 
-- **Spotify → Apple Music or Tidal:** track and album links, including `spotify.link` short links and `spotify:` links, open in the Music or TIDAL app (the web player only if the app isn't installed). Tidal matches are exact when you connect your Tidal account; otherwise Tidal opens a search.
-- **Copy Link for Current Song** (menu, ⇧⌘C): copies a link to the song playing in Tidal or Music, to share with a friend. Pick Tidal, Apple Music or Spotify from the submenu; ⇧⌘C copies one for your own service.
+- **Spotify → Apple Music or TIDAL:** track and album links, including `spotify.link` short links and `spotify:` links, open in the Music or TIDAL app (the web player only if the app isn't installed). TIDAL matches are exact when you connect your TIDAL account; otherwise TIDAL opens a search.
+- **Copy Link for Current Song** (menu, ⇧⌘C): copies a link to the song playing in TIDAL or Music, to share with a friend. Pick TIDAL, Apple Music or Spotify from the submenu; ⇧⌘C copies one for your own service.
 - **Autoplay** (optional): presses Play once the song has opened.
 - **Recently Opened** in the menu, Disable/Enable, Launch at Login.
 
@@ -20,8 +20,8 @@ Not converted yet: artists, playlists, podcasts (they open as usual).
 1. Download the latest `eddy-…-macos.zip` from [Releases](https://github.com/RespectWood/eddy/releases), unzip it and move **Eddy** to Applications.
 2. Open Eddy. macOS blocks it the first time, because this alpha isn't notarized by Apple: open **System Settings → Privacy & Security**, scroll down and click **Open Anyway**.
 3. In the window that appears:
-   - choose **Apple Music** or **Tidal**;
-   - Tidal: click **Connect Tidal** and log in, for exact matches;
+   - choose **Apple Music** or **TIDAL**;
+   - TIDAL: click **Connect TIDAL** and log in, for exact matches;
    - pick your normal browser;
    - click **Use Eddy for links** and confirm.
 4. Optional: turn on **Start Playing Automatically**. macOS asks for the Accessibility permission.
@@ -47,8 +47,8 @@ Eddy has no server, no account of its own, no analytics and no tracking. Nothing
 |---|---|---|
 | You click a Spotify link | Spotify (`open.spotify.com`; short links also their link service, e.g. `spotify.link`) | The link's ID, to read the song's title, artists and length |
 | Converting to Apple Music | Apple (iTunes Search API) | Artist and title, your country |
-| Converting to Tidal | Deezer, then TIDAL | Artist and title (Deezer, for the song's ISRC code); the ISRC or a search and your country (TIDAL) |
-| Copy Link for Current Song, and when you open Eddy's menu (so your default link is ready) | Spotify links: Deezer, MusicBrainz, Spotify. Apple Music links: Apple. Tidal links: Deezer, then TIDAL | Artist and title of the song playing, its ISRC code, your country (Apple Music, Tidal) |
+| Converting to TIDAL | Deezer, then TIDAL | Artist and title (Deezer, for the song's ISRC code); the ISRC or a search and your country (TIDAL) |
+| Copy Link for Current Song, and when you open Eddy's menu (so your default link is ready) | Spotify links: Deezer, MusicBrainz, Spotify. Apple Music links: Apple. TIDAL links: Deezer, then TIDAL | Artist and title of the song playing, its ISRC code, your country (Apple Music, TIDAL) |
 
 Like any app on the internet, these services see your IP address. Ordinary (non-Spotify) links cause no network traffic at all.
 
@@ -56,19 +56,19 @@ Like any app on the internet, these services see your IP address. Ordinary (non-
 
 - Matches found, for up to 30 days, so the same link opens instantly (`~/Library/Application Support/Eddy/cache.sqlite`). Older entries are deleted.
 - Your last 10 conversions (Recently Opened) and your settings, in Eddy's preferences.
-- Your Tidal login: access tokens, your TIDAL username and country, in the macOS Keychain, for this Mac only. Eddy never sees your password: you log in on TIDAL's own page.
+- Your TIDAL login: access tokens, your TIDAL username and country, in the macOS Keychain, for this Mac only. Eddy never sees your password: you log in on TIDAL's own page.
 
 **Permissions** (all optional):
 
-- **Accessibility**, asked when you turn on autoplay or copy a link while Tidal is playing: to press Play and to read which song TIDAL is playing. Used for nothing else.
+- **Accessibility**, asked when you turn on autoplay or copy a link while TIDAL is playing: to press Play and to read which song TIDAL is playing. Used for nothing else.
 - **Automation → Music**, asked the first time you copy a link while Music is playing: to ask Music which song is playing.
 - **Notifications**, asked when the setup window opens: to tell you when a link couldn't be matched exactly.
 
-**Disconnect Tidal:** Settings → Accounts → **Disconnect** deletes the login from your Mac, and Eddy stops using your TIDAL account right away.
+**Disconnect TIDAL:** Settings → Accounts → **Disconnect** deletes the login from your Mac, and Eddy stops using your TIDAL account right away.
 
 ## Uninstall
 
-1. If you connected Tidal: Settings → Accounts → **Disconnect**.
+1. If you connected TIDAL: Settings → Accounts → **Disconnect**.
 2. Set your normal browser back in **System Settings → Desktop & Dock → Default web browser**.
 3. Quit Eddy from its menu and delete it from Applications.
 4. Optional cleanup: remove Eddy under **Privacy & Security → Accessibility**, delete `~/Library/Application Support/Eddy`, and run `defaults delete com.respectwood.eddy` in Terminal to remove its settings.
@@ -84,7 +84,7 @@ scripts/build-app.sh                        # → dist/Eddy.app + zip (universal
 ARCHS=arm64 scripts/build-app.sh            # faster, Apple silicon only
 ```
 
-For **Connect Tidal**, create a free app at [developer.tidal.com](https://developer.tidal.com), add the redirect URI `eddy://auth/tidal`, and put its client ID in `.env` (see `.env.example`) before building.
+For **Connect TIDAL**, create a free app at [developer.tidal.com](https://developer.tidal.com), add the redirect URI `eddy://auth/tidal`, and put its client ID in `.env` (see `.env.example`) before building.
 
 Try the core without the app:
 
@@ -108,7 +108,7 @@ Found a vulnerability? Please report it privately, see [SECURITY.md](SECURITY.md
 
 ## Trademarks
 
-Eddy is an independent project. It isn't affiliated with, endorsed or sponsored by Spotify, TIDAL or Apple. Their names are used only to describe which links Eddy works with.
+Eddy is an independent project for personal use. It isn't affiliated with, endorsed or sponsored by Spotify, TIDAL or Apple. Their names are used only to describe which links Eddy works with; the TIDAL logo in Eddy's settings follows TIDAL's Design Guidelines.
 
 ## License
 

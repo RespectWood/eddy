@@ -89,7 +89,7 @@ impl std::fmt::Debug for TidalAuth {
 
 #[derive(Debug, thiserror::Error, PartialEq, Eq)]
 pub enum AuthError {
-    #[error("Tidal login was cancelled or denied: {0}")]
+    #[error("TIDAL login was cancelled or denied: {0}")]
     Denied(String),
     #[error("the login response didn't match this login (state mismatch)")]
     StateMismatch,
@@ -158,12 +158,12 @@ fn query_param(url: &Url, name: &str) -> Option<String> {
 fn describe_oauth_error(code: &str) -> &'static str {
     match code {
         "access_denied" => "the login was cancelled",
-        "temporarily_unavailable" | "server_error" => "Tidal's login is unavailable right now",
+        "temporarily_unavailable" | "server_error" => "TIDAL's login is unavailable right now",
         "invalid_scope"
         | "unauthorized_client"
         | "unsupported_response_type"
-        | "invalid_request" => "Tidal rejected this app's login request",
-        _ => "Tidal didn't accept the login",
+        | "invalid_request" => "TIDAL rejected this app's login request",
+        _ => "TIDAL didn't accept the login",
     }
 }
 
@@ -248,7 +248,7 @@ fn token_request(http: &Http, form: &[(&str, &str)]) -> Result<TokenResponse, Au
     match http.post(TOKEN_URL).send_form(form) {
         Ok(response) => response
             .into_json()
-            .map_err(|e| AuthError::Network(format!("Tidal login: invalid response: {e}"))),
+            .map_err(|e| AuthError::Network(format!("TIDAL login: invalid response: {e}"))),
         Err(ureq::Error::Status(code, response)) if (400..500).contains(&code) => {
             let body = response.into_string().unwrap_or_default();
             Err(AuthError::Denied(format!(
@@ -256,7 +256,7 @@ fn token_request(http: &Http, form: &[(&str, &str)]) -> Result<TokenResponse, Au
                 body.chars().take(200).collect::<String>()
             )))
         }
-        Err(e) => Err(AuthError::Network(format!("Tidal login: {e}"))),
+        Err(e) => Err(AuthError::Network(format!("TIDAL login: {e}"))),
     }
 }
 

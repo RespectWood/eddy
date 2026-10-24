@@ -73,9 +73,9 @@ struct MenuContent: View {
         if model.service == .tidal {
             switch model.tidalAccount.status {
             case .notConnected, .failed:
-                Button("Connect Tidal for Exact Matches…") { settingsWindow.show() }
+                Button("Connect TIDAL for Exact Matches…") { settingsWindow.show() }
             case .needsReconnect:
-                Button("Tidal login expired: Reconnect…") { settingsWindow.show() }
+                Button("TIDAL login expired: Reconnect…") { settingsWindow.show() }
             default:
                 EmptyView()
             }

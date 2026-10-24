@@ -122,7 +122,7 @@ final class TidalAccount: ObservableObject {
                     self.onChange?()
                 case let .failure(error):
                     DebugCommands.log("Tidal login failed: \(error)")
-                    self.status = .failed("Tidal login failed: \(Self.describe(error))")
+                    self.status = .failed("TIDAL login failed: \(Self.describe(error))")
                 }
             }
         }
@@ -132,7 +132,7 @@ final class TidalAccount: ObservableObject {
         switch error as? TidalLoginError {
         case let .Denied(message): message
         case .StateMismatch: "the response didn't belong to this login. Try again."
-        case .MissingCode: "Tidal didn't send a login code."
+        case .MissingCode: "TIDAL didn't send a login code."
         case let .Network(message): message
         case nil: error.localizedDescription
         }

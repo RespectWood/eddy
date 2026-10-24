@@ -22,6 +22,7 @@
   - IDs and ISRCs from API responses are checked before they go into URLs.
   - CI: read-only token, actions pinned to commits, `cargo audit`, Dependabot.
   - Eddy only accepts the link types and HTML files it's registered for, and checks every link's scheme before opening it.
+- TIDAL's logo (linking to tidal.com) in Settings → Accounts, and "TIDAL" written in capitals throughout the app, as TIDAL's Design Guidelines ask.
 - Cached matches older than 30 days are now deleted, not just ignored. The Tidal profile only keeps your username and country, never your email or name.
 
 ## 0.1.0-alpha (unreleased)

@@ -42,6 +42,8 @@ A Spotify playlist doesn't exist on Tidal or Apple Music, so there's no single p
 
 **Recommendation:** C1 now, C2 as a later option once write scopes are available. Decide before Part C starts.
 
+**TIDAL approval:** the TIDAL Developer Guidelines (III) list "Enabling the transfer of data to another service" and "Integrating TIDAL content with content or streams from another service" as prohibited without TIDAL's express written approval. C2 (copying a Spotify playlist into TIDAL) is that kind of feature, and C1 is close to it. Describe Part C to TIDAL and get written approval before building it for TIDAL, and resubmit if the app is already in Production Mode ("material changes", Developer Terms IV).
+
 C1 details:
 - Spotify playlist embed page → playlist name, owner, track list (title, artists, duration).
 - Window lists the tracks; matching each one runs **lazily** (on click, or in the background for the first ~10) to stay within Tidal's usage limits and the cache.

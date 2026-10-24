@@ -437,7 +437,7 @@ impl Tidal {
             request
                 .set("Authorization", &format!("Bearer {token}"))
                 .set("Accept", "application/vnd.api+json"),
-            "Tidal",
+            "TIDAL",
         );
         if result.is_err() {
             // A rejected token is refreshed on the next lookup.
@@ -515,9 +515,9 @@ impl Tidal {
             .post(TOKEN_URL)
             .set("Authorization", &format!("Basic {basic}"))
             .send_form(&[("grant_type", "client_credentials")])
-            .map_err(|e| map_err("Tidal login", e))?
+            .map_err(|e| map_err("TIDAL login", e))?
             .into_json()
-            .map_err(|e| ResolveError::Network(format!("Tidal login: invalid response: {e}")))?;
+            .map_err(|e| ResolveError::Network(format!("TIDAL login: invalid response: {e}")))?;
         // Refresh a minute early so a token never expires mid-request.
         let lifetime = Duration::from_secs(response.expires_in.saturating_sub(60));
         *cached = Some((response.access_token.clone(), Instant::now() + lifetime));

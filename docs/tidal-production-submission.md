@@ -35,6 +35,12 @@ ISRCs and UPCs come from Deezer's public API, matched by the Spotify title, arti
 
 **Storage:** each match (TIDAL ID, album title, album artist) is cached on the user's Mac for at most 30 days, so a link clicked again opens instantly without new API calls. Expired entries are deleted. Nothing is stored on any server; Eddy has none.
 
+## Attribution
+
+Settings → Accounts shows the official TIDAL logo (horizontal, white on black in dark mode, black on white in light mode, with the clear space from the Design Guidelines, about 14 pt tall) linking to tidal.com, only in the TIDAL account row, never next to other services. Eddy displays no TIDAL artwork or audio and doesn't alter any metadata; "TIDAL" is written in capitals throughout the app.
+
+We took the logo from the Design Guidelines page. **Is there an official logo pack** (SVG or PNG, light and dark) we should use instead?
+
 ## Features we'd like you to confirm
 
 Two optional features read from or press buttons in the TIDAL desktop app through macOS Accessibility. We want to be upfront about them and will turn them off for TIDAL if you'd rather we didn't offer them:

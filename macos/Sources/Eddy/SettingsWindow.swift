@@ -56,7 +56,7 @@ struct SettingsView: View {
                 }
                 if model.service == .tidal {
                     Toggle("Show artist page instead of song", isOn: $model.showsTidalArtistPage)
-                    Text("Off: Tidal opens the song, highlighted on its album or single. On: the artist's page opens instead (autoplay doesn't work there).")
+                    Text("Off: TIDAL opens the song, highlighted on its album or single. On: the artist's page opens instead (autoplay doesn't work there).")
                         .font(.caption)
                         .foregroundStyle(.secondary)
                 }
@@ -66,10 +66,10 @@ struct SettingsView: View {
                 Section("Accounts") {
                     TidalAccountRow(account: model.tidalAccount, browser: model.browserBundleID)
                     // Shown before signing in, as TIDAL's developer terms require.
-                    Link("What Eddy does with your Tidal login…", destination: Self.privacyURL)
+                    Link("What Eddy does with your TIDAL login…", destination: Self.privacyURL)
                         .font(.caption)
                     DisclosureGroup("Developer") {
-                        Text("Client ID and secret of your own app from developer.tidal.com. Used only while Tidal isn't connected above.")
+                        Text("Client ID and secret of your own app from developer.tidal.com. Used only while TIDAL isn't connected above.")
                             .font(.caption)
                             .foregroundStyle(.secondary)
                         TextField("Client ID", text: $model.tidalClientID)
@@ -80,7 +80,7 @@ struct SettingsView: View {
 
             Section("Autoplay (optional)") {
                 Toggle("Start playing automatically", isOn: $model.autoPlay)
-                Text("Neither Tidal nor Apple Music can start playback from a link, so Eddy presses the Play button for you once the song's page has opened. This needs the Accessibility permission, and Eddy only uses it for that one button.")
+                Text("Neither TIDAL nor Apple Music can start playback from a link, so Eddy presses the Play button for you once the song's page has opened. This needs the Accessibility permission, and Eddy only uses it for that one button.")
                     .font(.caption)
                     .foregroundStyle(.secondary)
                 if model.autoPlayNeedsPermission {
@@ -158,8 +158,8 @@ struct TidalAccountRow: View {
 
     var body: some View {
         HStack(alignment: .firstTextBaseline) {
-            VStack(alignment: .leading, spacing: 2) {
-                Text("Tidal")
+            VStack(alignment: .leading, spacing: 4) {
+                TidalBadge()
                 Text(detail)
                     .font(.caption)
                     .foregroundStyle(detailColor)
@@ -174,21 +174,21 @@ struct TidalAccountRow: View {
             case .connected:
                 Button("Disconnect") { account.disconnect() }
             case .needsReconnect:
-                Button("Reconnect Tidal") { account.connect(in: browser) }
+                Button("Reconnect TIDAL") { account.connect(in: browser) }
             case .notConnected, .failed:
-                Button("Connect Tidal") { account.connect(in: browser) }
+                Button("Connect TIDAL") { account.connect(in: browser) }
             }
         }
     }
 
     private var detail: String {
         switch account.status {
-        case .notConfigured: "Not available in this build (no Tidal client ID)."
-        case .notConnected: "Log in once for exact matches. Without it, Tidal shows search results."
-        case .connecting: "Log in to Tidal in your browser. When it asks, allow it to open eddy."
+        case .notConfigured: "Not available in this build (no TIDAL client ID)."
+        case .notConnected: "Log in once for exact matches. Without it, TIDAL shows search results."
+        case .connecting: "Log in to TIDAL in your browser. When it asks, allow it to open eddy."
         case let .connected(name, country):
             "Connected" + (name.map { " as \($0)" } ?? "") + (country.map { " · \($0)" } ?? "")
-        case .needsReconnect: "Your Tidal login expired. Showing search results until you reconnect."
+        case .needsReconnect: "Your TIDAL login expired. Showing search results until you reconnect."
         case let .failed(message): message
         }
     }
@@ -199,5 +199,32 @@ struct TidalAccountRow: View {
         case .connected: .green
         default: .secondary
         }
+    }
+}
+
+/// TIDAL's logo, as its Design Guidelines require wherever TIDAL is used: the official
+/// horizontal logo, unaltered, white on black (dark mode) or black on white (light mode),
+/// with its clear space, linking back to TIDAL. At 40 pt the logo itself is ~14 pt tall
+/// (minimum 13 px). Only shown next to TIDAL, never next to other services.
+struct TidalBadge: View {
+    @Environment(\.colorScheme) private var colorScheme
+
+    var body: some View {
+        Link(destination: URL(string: "https://tidal.com")!) {
+            if let logo = NSImage(named: colorScheme == .dark ? "tidal-logo-dark" : "tidal-logo-light") {
+                Image(nsImage: logo)
+                    .resizable()
+                    .interpolation(.high)
+                    .aspectRatio(contentMode: .fit)
+                    .frame(height: 40)
+                    .clipShape(RoundedRectangle(cornerRadius: 4))
+            } else {
+                // Not bundled (e.g. `swift run`): the name, still linking back.
+                Text("TIDAL").bold()
+            }
+        }
+        .buttonStyle(.plain)
+        .help("tidal.com")
+        .accessibilityLabel("TIDAL")
     }
 }

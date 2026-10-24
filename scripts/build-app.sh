@@ -54,6 +54,8 @@ plutil -replace CFBundleVersion -string "$BUILD" "$PLIST"
 plutil -replace EddyTidalClientID -string "${EDDY_TIDAL_CLIENT_ID:-}" "$PLIST"
 plutil -lint "$PLIST" >/dev/null
 cp Resources/AppIcon.icns "$APP/Contents/Resources/"   # from scripts/make-icon.swift
+# TIDAL's logo for Settings (from TIDAL's Design Guidelines; see TidalBadge).
+cp Resources/tidal-logo-light.png Resources/tidal-logo-dark.png "$APP/Contents/Resources/"
 
 # Every build gets the hardened runtime: without it, any local process can inject a
 # library (DYLD_INSERT_LIBRARIES) and inherit Eddy's Accessibility and Automation

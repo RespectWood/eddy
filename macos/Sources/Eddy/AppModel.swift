@@ -233,15 +233,15 @@ final class AppModel: ObservableObject {
             }
             TargetApps.open(nativeURL: searchNativeUrl, webURL: searchWebUrl, service: service, browser: browserBundleID)
             let body = switch reason {
-            case .noCredentials: "Connect Tidal in Settings for exact matches. Showing search results instead."
-            case .accountExpired: "Your Tidal login expired. Reconnect Tidal in Settings. Showing search results instead."
+            case .noCredentials: "Connect TIDAL in Settings for exact matches. Showing search results instead."
+            case .accountExpired: "Your TIDAL login expired. Reconnect TIDAL in Settings. Showing search results instead."
             default: "Not found on \(service.displayName). Showing search results instead."
             }
             Notifier.post(title: name.isEmpty ? "No exact match" : name, body: body)
         case .AccountExpired:
             // Normally turned into `NotFound(.accountExpired)` with a search; just in case.
             Browsers.forward(original, to: browserBundleID)
-            Notifier.post(title: "Tidal login expired", body: "Reconnect Tidal in Settings.")
+            Notifier.post(title: "TIDAL login expired", body: "Reconnect TIDAL in Settings.")
         case let .RateLimited(api):
             Browsers.forward(original, to: browserBundleID)
             Notifier.post(title: "Lookup limit reached", body: "\(api) is rate limiting requests. Opened the original link.")
@@ -340,13 +340,13 @@ final class AppModel: ObservableObject {
         switch reading {
         case .needsAccessibility:
             AX.requestTrust()
-            Notifier.post(title: "Can't see what Tidal is playing", body: "Eddy needs the Accessibility permission to read Tidal's player.")
+            Notifier.post(title: "Can't see what TIDAL is playing", body: "Eddy needs the Accessibility permission to read TIDAL's player.")
         case .tidalWindowNotVisible:
-            Notifier.post(title: "Can't see Tidal's player", body: "Tidal's window is closed or on another desktop. Show it and try again.")
+            Notifier.post(title: "Can't see TIDAL's player", body: "TIDAL's window is closed or on another desktop. Show it and try again.")
         case .needsAutomation:
             Notifier.post(title: "Can't see what Music is playing", body: "Allow Eddy to control Music in System Settings → Privacy & Security → Automation.")
         default:
-            Notifier.post(title: "Nothing is playing", body: "Play a song in Tidal or Music first.")
+            Notifier.post(title: "Nothing is playing", body: "Play a song in TIDAL or Music first.")
         }
     }
 
@@ -440,7 +440,7 @@ extension ShareTarget: CaseIterable, Identifiable {
         switch self {
         case .spotify: "Spotify"
         case .appleMusic: "Apple Music"
-        case .tidal: "Tidal"
+        case .tidal: "TIDAL"
         }
     }
 }
@@ -464,7 +464,7 @@ extension Service: CaseIterable, Identifiable {
     var displayName: String {
         switch self {
         case .appleMusic: "Apple Music"
-        case .tidal: "Tidal"
+        case .tidal: "TIDAL"
         }
     }
 }
