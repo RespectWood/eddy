@@ -8,7 +8,7 @@ https://github.com/user-attachments/assets/8459c138-5f37-4871-9260-f4773f569c3d
 
 A friend sends you a Spotify link in Messages, Slack or Mail. Instead of Spotify's web player, the same song opens in your own streaming app, ready to play. Every other link goes to your normal browser, untouched.
 
-> **Status: alpha.** Works daily on the developer's Mac; expect rough edges. macOS 13 or later.
+> **Status: beta.** Works daily on the developer's Mac and is now being tested by others; expect rough edges. macOS 13 or later.
 
 ## What it does
 
@@ -24,7 +24,7 @@ Not converted yet: artists, playlists, podcasts (they open as usual).
 ## Install
 
 1. Download the latest `eddy-…-macos.zip` from [Releases](https://github.com/RespectWood/eddy/releases), unzip it and move **eddy** to Applications.
-2. Open eddy. macOS blocks it the first time, because this alpha isn't notarized by Apple: open **System Settings → Privacy & Security**, scroll down and click **Open Anyway**.
+2. Open eddy. macOS blocks it the first time, because this beta isn't notarized by Apple: open **System Settings → Privacy & Security**, scroll down and click **Open Anyway**.
 3. In the window that appears:
    - choose **Apple Music** or **TIDAL**;
    - TIDAL: click **Connect TIDAL** and log in, for exact matches;

@@ -1,39 +1,37 @@
 # Changelog
 
-## Unreleased
+## 0.1.0-beta.1 (not yet released)
 
-- **The name is written in lowercase: eddy.** The app is `eddy.app` (executable `eddy`), and every text in the app and the docs says eddy. Bundle ID, permissions and settings are unchanged.
-- **Renamed to Eddy** (was openstream): app Eddy.app, bundle ID `com.respectwood.eddy`, link scheme `eddy://` (Tidal redirect `eddy://auth/tidal`), crates `eddy-core` / `eddy-ffi` / `eddy-cli`, CLI `eddy`, repo RespectWood/eddy.
-- **New icon:** a lowercase e whose bar runs out as an arrow, amber and ink. App icon, plus the same mark in the menu bar (dimmed while Eddy is disabled). Sources in `assets/brand/`.
-- Tidal and Apple Music open the artist's **original release** instead of a "Various Artists" compilation that contains the same recording (ticket 0002). Tidal candidates now combine the ISRC lookup with Tidal search and are ranked by album artist, popularity and release date.
-- New setting **Show Artist Page Instead of Song**: Tidal tracks open on the song, highlighted on its album or single (default), or on the artist page.
-- `eddy resolve … --explain` prints every candidate and its score.
-- **Autoplay (opt-in):** after opening the song, Eddy presses its play button in Tidal (verified) or Apple Music (untested), using the Accessibility permission (ticket 0003).
-- Cache entries from earlier versions are discarded.
-- **Copy Spotify Link for Current Song** (menu, ⇧⌘C): reads the song playing in Tidal (Accessibility) or Music (AppleScript) and copies its Spotify link, found through Deezer (ISRC), MusicBrainz and Spotify's embed page; no Spotify account needed. Falls back to a Spotify search link. The lookup starts when the menu opens, so the link is usually ready by the click (ticket 0009).
-- `eddy share --title … --artist …` CLI command.
-- **Copy Link for Current Song** replaces Copy Spotify Link: a submenu copies a link to the song for Tidal, Apple Music or Spotify, and ⇧⌘C copies one for your own service. Links are web links that open on any device; without an exact match, a search link. `eddy share --to spotify|tidal|apple-music --country DE`.
-- **Security hardening** (ticket 0010):
-  - Every build is signed with the hardened runtime, so no other process can inject code into Eddy and use its Accessibility or Automation permission.
-  - The Tidal developer client secret moved from preferences to the Keychain (migrated on first launch). Keychain items stay on this Mac (not restored from backups onto another one).
-  - Debug commands need a secret token (`scripts/debug.sh`); the old `debugCommands` setting no longer does anything.
-  - A forged `eddy://auth/tidal` redirect no longer cancels a Tidal login in progress, and login errors show Eddy's own text instead of text from the redirect.
-  - Short links are always fetched over HTTPS; all network requests are HTTPS only.
-  - Clicked links are no longer written to the system log in readable form.
-  - IDs and ISRCs from API responses are checked before they go into URLs.
-  - CI: read-only token, actions pinned to commits, `cargo audit`, Dependabot.
-  - Eddy only accepts the link types and HTML files it's registered for, and checks every link's scheme before opening it.
-- Copy Link looks up your default link when you open its submenu, not whenever the menu opens, and songs without an exact match aren't looked up again for 10 minutes. Saves TIDAL's per-app quota (shared by all users).
-- TIDAL's logo (linking to tidal.com) in Settings → Accounts, and "TIDAL" written in capitals throughout the app, as TIDAL's Design Guidelines ask.
-- Cached matches older than 30 days are now deleted, not just ignored. From the TIDAL profile only your country is kept, never your username, email or name.
+First public test release. (A `0.1.0-alpha` was planned but never released; everything below is new.)
 
-## 0.1.0-alpha (unreleased)
+### What eddy does
 
-First working version.
+- **Spotify links open in Apple Music or TIDAL.** eddy registers as the macOS default web browser, converts clicked Spotify track and album links (including `intl-xx` links, `?si=` tracking, `spotify.link` / `spoti.fi` short links and `spotify:` links) and opens them in the Music or TIDAL app; the web player only when the app isn't installed. Every other link goes straight to your normal browser.
+- **Matching:** Apple Music through the iTunes Search API; TIDAL exactly by ISRC/UPC (via Deezer) plus TIDAL search, preferring the artist's **original release** over "Various Artists" compilations. Without an exact match, the service's search opens.
+- **Connect TIDAL:** log in with your own TIDAL account (OAuth with PKCE, in your browser) for exact matches. The login stays in the Keychain on your Mac.
+- **Copy Link for Current Song** (menu, ⇧⌘C): copies a link to the song playing in TIDAL or Music, for TIDAL, Apple Music or Spotify (submenu); ⇧⌘C copies one for your own service. Web links that open on any device; a search link when there's no exact match.
+- **Autoplay** (optional): presses Play once the song has opened, using the Accessibility permission. Verified with TIDAL; untested with Apple Music.
+- **Show Artist Page Instead of Song** (TIDAL): open the artist instead of the song.
+- Menu bar app for macOS 13+ (no Dock icon): setup window, Disable/Enable, Recently Opened, choice of service and browser, launch at login, notifications when a link couldn't be matched exactly.
+- Matches are cached locally for 30 days, then deleted.
+- Icon: a lowercase e whose bar runs out as an arrow (`assets/brand/`). The name is written in lowercase: **eddy**.
 
-- Menu bar app for macOS 13+ (no Dock icon) that registers as the web link handler, converts Spotify links and passes every other link straight to your normal browser.
-- Spotify track and album links (incl. `intl-xx` prefixes, `?si=` tracking, `spotify.link` / `spoti.fi` short links) open in the native **Apple Music** or **Tidal** app, with the web player only as a fallback when the app isn't installed.
-- Apple Music matching via the iTunes Search API. Exact Tidal matching via ISRC/UPC with optional TIDAL API credentials, otherwise a Tidal search.
-- Setup window, pause/resume, recent conversions, choice of service and browser, launch at login, notifications for fallbacks.
-- Local SQLite cache of conversions (30 days).
-- `eddy` CLI: `parse` and `resolve` commands.
+### Privacy and security
+
+- No server, no account of its own, no analytics; nothing is sent to the developer. What goes where: [README → Privacy](README.md#privacy).
+- From the TIDAL profile only your country is kept, never your username, email or name.
+- Hardened runtime on every build, secrets only in the Keychain (this Mac only), HTTPS only, debug commands only with a secret token, forged TIDAL login redirects ignored, only the link types eddy is registered for are accepted, and values from APIs are checked before they go into links (ticket 0010).
+- TIDAL branding as TIDAL's guidelines ask: TIDAL's logo linking to tidal.com in Settings → Accounts, "TIDAL" in capitals.
+
+### Known limitations
+
+- **Not notarized by Apple.** The first launch needs System Settings → Privacy & Security → **Open Anyway**.
+- **TIDAL is in development mode:** one shared usage limit for all users, so busy moments can fall back to TIDAL search ("TIDAL is rate limiting requests"). TIDAL may not yet let every account sign in with Connect TIDAL; without it, TIDAL opens a search instead of the exact song.
+- Apple Music autoplay and Apple Music in general are less tested than TIDAL.
+- Spotify links clicked *inside* your browser stay in the browser; eddy only sees links from other apps (ticket 0007).
+- Artist, playlist and podcast links aren't converted; they open as usual (ticket 0008).
+
+### For developers
+
+- `eddy` CLI: `parse`, `resolve … --to tidal|apple-music [--explain]`, `share --title … --artist … --to spotify|tidal|apple-music`.
+- `scripts/debug.sh` sends developer commands to the running app (creates its token on first use).
