@@ -44,7 +44,7 @@ pub struct TidalTokens {
     pub refresh_token: Option<String>,
     /// Unix seconds.
     pub expires_at: u64,
-    /// Display name for "Connected as …", from the profile.
+    /// TIDAL username for "Connected as …", from the profile (never the email).
     pub user_name: Option<String>,
     /// Account country, used as the lookup country.
     pub country: Option<String>,
@@ -277,10 +277,9 @@ fn profile(http: &Http, access_token: &str) -> Result<(Option<String>, Option<St
             .filter(|s| !s.is_empty())
             .map(str::to_string)
     };
-    let name = text("username")
-        .or_else(|| text("email"))
-        .or_else(|| text("firstName"));
-    Ok((name, text("country")))
+    // Only what "Connected as …" and lookups need: never the email address or real
+    // name (TIDAL's developer terms ask for data minimisation).
+    Ok((text("username"), text("country")))
 }
 
 fn random_token(bytes: usize) -> String {

@@ -33,11 +33,19 @@ Turn what's on `main` into a **tagged, stable version** to use every day before 
 - [ ] Ticket statuses: 0001–0004 updated to their final state.
 - [ ] Turn off the developer settings on the release build path: debug commands stay opt-in (they need the `debugToken` default, see 0010), and the release build doesn't depend on the local `.env` except for the public Tidal client ID.
 
+### 3a. TIDAL (Developer Terms v3.0, see 0004)
+- [ ] Q5: a second Tidal account (a friend) presses Connect Tidal on a release build. Result decides what the release notes say about exact Tidal matches.
+- [ ] README **Privacy** section, public before anyone signs in (Annex 1, 3.3): what Eddy sends where (Deezer, iTunes, MusicBrainz, Spotify's embed page, TIDAL), that the Tidal login stays in the Mac's Keychain, how to disconnect (Settings → Disconnect, and revoking access in the Tidal account), that nothing goes to the developer. Link it from the Connect Tidal row in Settings.
+- [ ] README: "Eddy isn't affiliated with or endorsed by TIDAL, Spotify or Apple." No TIDAL logos (III).
+- [ ] `SECURITY.md`: a leak of Tidal tokens must be reported to `dataprotectionofficer@tidal.com` within 24 hours (Annex 1, 3.11).
+- [ ] Submit for **Production Mode** in the developer dashboard. Use case: catalog lookups (ISRC/UPC, search) to open tracks and albums in the official TIDAL app; users sign in with their own account (authorization code + PKCE, no scopes); no playback in Eddy; metadata cached locally for at most 30 days; free, non-commercial, open source (repo link). Disclose and ask about: autoplay (presses Play in TIDAL's desktop app through macOS Accessibility), "Copy Spotify Link" (reads the song playing in TIDAL's app the same way). If TIDAL objects, turn those off for Tidal and keep them for Apple Music.
+- [ ] Release without waiting for approval; release notes say exact Tidal matches may be limited while the app is in development mode (search results otherwise).
+
 ### 3. Build and release
 - [ ] Universal build (`scripts/build-app.sh`).
 - [ ] Tag `v0.1.0-alpha`, push the tag.
 - [ ] GitHub **pre-release** with the zip and release notes from the CHANGELOG.
-- [ ] Release notes say clearly: **signed with a local development certificate, so it only installs cleanly on the developer's Mac.** Others need the right-click → Open workaround, and the Accessibility permission has to be re-granted after updates. Proper Developer ID signing and notarization needs the paid Apple Developer account (PLAN.md Phase 3).
+- [ ] Release notes say clearly: **signed with a local development certificate, so it only installs cleanly on the developer's Mac.** Others have to open it once, then allow it in System Settings → Privacy & Security → "Open Anyway" (right-click → Open no longer works since macOS 15), and the Accessibility permission has to be re-granted after updates. Proper Developer ID signing and notarization needs the paid Apple Developer account (PLAN.md Phase 3).
 
 ### 4. Optional: release automation
 - [ ] A CI job on tags that builds the zip and attaches it to the release (signing stays local until there's a Developer ID).

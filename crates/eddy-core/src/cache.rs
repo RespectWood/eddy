@@ -10,7 +10,9 @@ use crate::resolve::Conversion;
 use crate::reverse::SpotifyShare;
 use crate::target::Service;
 
-/// Catalogs change (regional availability, re-releases), so entries expire.
+/// Catalogs change (regional availability, re-releases), so entries expire. Expired
+/// entries are deleted, not just ignored: TIDAL's developer terms allow only temporary
+/// caching of its metadata ("Do not store TIDAL Content indefinitely").
 const MAX_AGE_SECS: i64 = 30 * 24 * 60 * 60;
 
 /// Bump when matching changes enough that earlier results shouldn't be reused.
@@ -57,7 +59,23 @@ impl Cache {
                 created_at INTEGER NOT NULL
             );"
         ))?;
-        Ok(Self { conn })
+        // Deleted entries are overwritten on disk, not left in free pages.
+        conn.pragma_update(None, "secure_delete", true)?;
+        let cache = Self { conn };
+        cache.delete_expired();
+        Ok(cache)
+    }
+
+    /// Runs on open and after every write, since the app may run for weeks.
+    fn delete_expired(&self) {
+        let cutoff = now() - MAX_AGE_SECS;
+        for table in [TABLE, SHARE_TABLE] {
+            // A failure only delays the cleanup until the next write.
+            let _ = self.conn.execute(
+                &format!("DELETE FROM {table} WHERE created_at <= ?1"),
+                params![cutoff],
+            );
+        }
     }
 
     pub fn get(&self, link: &SpotifyLink, service: Service, country: &str) -> Option<Conversion> {
@@ -106,6 +124,7 @@ impl Cache {
                 now()
             ],
         );
+        self.delete_expired();
     }
 }
 
@@ -133,6 +152,7 @@ impl Cache {
             &format!("INSERT OR REPLACE INTO {SHARE_TABLE} VALUES (?1, ?2, ?3)"),
             params![song, json, now()],
         );
+        self.delete_expired();
     }
 }
 
@@ -174,6 +194,48 @@ mod tests {
         assert_eq!(cache.get(&link, Service::Tidal, "DE"), Some(conversion));
         assert!(cache.get(&link, Service::Tidal, "US").is_none());
         assert!(cache.get(&link, Service::AppleMusic, "DE").is_none());
+    }
+
+    #[test]
+    fn deletes_expired_entries() {
+        let cache = Cache::in_memory().unwrap();
+        let old = now() - MAX_AGE_SECS - 1;
+        cache
+            .conn
+            .execute(
+                &format!("INSERT INTO {TABLE} VALUES ('track', 'old', 'tidal', 'DE', '{{}}', ?1)"),
+                params![old],
+            )
+            .unwrap();
+        cache
+            .conn
+            .execute(
+                &format!("INSERT INTO {SHARE_TABLE} VALUES ('old', '{{}}', ?1)"),
+                params![old],
+            )
+            .unwrap();
+        cache.put_share(
+            "new",
+            &SpotifyShare {
+                url: "https://open.spotify.com/track/1M18Qdzl9xFVRmUm66zn34".into(),
+                exact: true,
+                title: "Yeah!".into(),
+                artist: "USHER".into(),
+                from_cache: false,
+            },
+        );
+        let count = |table: &str| -> i64 {
+            cache
+                .conn
+                .query_row(&format!("SELECT COUNT(*) FROM {table}"), [], |r| r.get(0))
+                .unwrap()
+        };
+        assert_eq!(count(TABLE), 0, "expired conversion kept");
+        assert_eq!(
+            count(SHARE_TABLE),
+            1,
+            "only the new share link should remain"
+        );
     }
 
     #[test]
