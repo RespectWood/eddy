@@ -37,6 +37,8 @@ struct SettingsView: View {
     let close: () -> Void
     @State private var setupError: String?
 
+    private static let privacyURL = URL(string: "https://github.com/RespectWood/eddy#privacy")!
+
     var body: some View {
         Form {
             Section {
@@ -63,6 +65,9 @@ struct SettingsView: View {
             if model.service == .tidal {
                 Section("Accounts") {
                     TidalAccountRow(account: model.tidalAccount, browser: model.browserBundleID)
+                    // Shown before signing in, as TIDAL's developer terms require.
+                    Link("What Eddy does with your Tidal login…", destination: Self.privacyURL)
+                        .font(.caption)
                     DisclosureGroup("Developer") {
                         Text("Client ID and secret of your own app from developer.tidal.com. Used only while Tidal isn't connected above.")
                             .font(.caption)

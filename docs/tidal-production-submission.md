@@ -1,0 +1,47 @@
+# TIDAL Production Mode submission
+
+Text for the Production Mode request in the TIDAL developer dashboard (app "eddy-dev"). Paste the sections the form asks for; keep this file in sync with what was submitted.
+
+---
+
+## Summary
+
+Eddy is a free, open-source macOS menu bar app. When someone clicks a Spotify link in another app (Messages, Mail, Slack…), Eddy finds the same track or album on TIDAL and opens it **in the official TIDAL desktop app**. Its purpose is to bring listeners who receive Spotify links to TIDAL instead of Spotify.
+
+- Non-commercial: free, no ads, no paid features, no data collection. Licensed MIT OR Apache-2.0.
+- Source code: https://github.com/RespectWood/eddy
+- Privacy notice: https://github.com/RespectWood/eddy#privacy (also linked next to "Connect Tidal" in the app, before signing in)
+- Platform: macOS 13 and later.
+
+## How Eddy uses the TIDAL API
+
+**Authorization:** each user signs in with their own TIDAL account through the Authorization Code flow with PKCE (`login.tidal.com/authorize`, redirect URI `eddy://auth/tidal`). Eddy is a public client: no client secret ships with the app. **No scopes are requested.** Tokens are stored only in the macOS Keychain on the user's Mac, and users can disconnect at any time (Settings → Accounts → Disconnect), which deletes them.
+
+**Endpoints (catalog reads only, with the user's token and their country):**
+
+| Endpoint | Purpose |
+|---|---|
+| `GET /v2/tracks?filter[isrc]=…&include=albums,artists` | Find the track by ISRC (at most 3 pages) |
+| `GET /v2/searchResults?filter[query]=…&include=tracks…` | Find the track by artist and title when the ISRC alone isn't enough |
+| `GET /v2/albums?filter[barcodeId]=…` | Find an album by UPC |
+| `GET /v2/albums?filter[id]=…&include=artists` | Album artists, to prefer an artist's original album over compilations (batches of 20 IDs) |
+| `GET /v2/users/me` | Once after sign-in: username ("Connected as …") and country for lookups. Without the `user.read` scope this returns nothing and Eddy uses the Mac's region. Email and name are never kept |
+
+ISRCs and UPCs come from Deezer's public API, matched by the Spotify title, artist and duration.
+
+**Volume:** only when a user clicks a Spotify link. An uncached track takes about 2–7 requests, an album 1. There is no background polling, crawling or bulk retrieval.
+
+**What Eddy does with the results:** it opens `tidal://track/<id>`, `tidal://album/<id>` or `tidal://artist/<id>` in the TIDAL desktop app (or `tidal.com/browse/…` if the app isn't installed). Without a match, it opens TIDAL's search. Eddy shows no TIDAL content itself and plays nothing: **all playback happens in TIDAL's own app.**
+
+**Storage:** each match (TIDAL ID, album title, album artist) is cached on the user's Mac for at most 30 days, so a link clicked again opens instantly without new API calls. Expired entries are deleted. Nothing is stored on any server; Eddy has none.
+
+## Features we'd like you to confirm
+
+Two optional features work with the TIDAL desktop app through macOS Accessibility, not through the API. We want to be upfront about them and will turn them off for TIDAL if you'd rather we didn't offer them:
+
+1. **Autoplay** (off by default). TIDAL deep links open a track's page but can't start playback, so after opening the link Eddy presses that page's Play button in the TIDAL app, once, for the track the user clicked. It needs the user to grant the Accessibility permission.
+2. **Copy Spotify Link** (menu command). Reads the title and artist of the song playing in the TIDAL app (when the user asks, or when they open Eddy's menu so the link is ready), and copies a Spotify link for it, so they can share the song with friends who use Spotify. No TIDAL API call is involved; the lookup uses Deezer, MusicBrainz and Spotify.
+
+## Contact
+
+RespectWood on GitHub: https://github.com/RespectWood/eddy (the form's contact field has the email address)

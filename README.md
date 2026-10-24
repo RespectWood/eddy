@@ -1,37 +1,90 @@
 # Eddy
 
-**Click any Spotify link, anywhere on your Mac, and it opens in your preferred streaming app.**
+**Click a Spotify link anywhere on your Mac, and it opens in Apple Music or Tidal.**
 
-Eddy is a small macOS menu bar app for people who use Apple Music or Tidal. When a friend sends you a Spotify link, Eddy finds the same track and opens it in your streaming app's desktop app instead of Spotify's web player. You don't have to search for it by hand. All other links go straight to your normal browser.
+A friend sends you a Spotify link in Messages, Slack or Mail. Instead of Spotify's web player, the same song opens in your own streaming app, ready to play. Every other link goes to your normal browser, untouched.
 
-> Status: early development. Nothing to install yet.
+> **Status: alpha.** Works daily on the developer's Mac; expect rough edges. macOS 13 or later.
+
+## What it does
+
+- **Spotify → Apple Music or Tidal:** track and album links, including `spotify.link` short links and `spotify:` links, open in the Music or TIDAL app (the web player only if the app isn't installed). Tidal matches are exact when you connect your Tidal account; otherwise Tidal opens a search.
+- **Copy Spotify Link** (menu, ⇧⌘C): copies a Spotify link for the song playing in Tidal or Music, to share with friends who use Spotify.
+- **Autoplay** (optional): presses Play once the song has opened.
+- **Recently Opened** in the menu, Disable/Enable, Launch at Login.
+
+Not converted yet: artists, playlists, podcasts (they open as usual).
+
+## Install
+
+1. Download the latest `eddy-…-macos.zip` from [Releases](https://github.com/RespectWood/eddy/releases), unzip it and move **Eddy** to Applications.
+2. Open Eddy. macOS blocks it the first time, because this alpha isn't notarized by Apple: open **System Settings → Privacy & Security**, scroll down and click **Open Anyway**.
+3. In the window that appears:
+   - choose **Apple Music** or **Tidal**;
+   - Tidal: click **Connect Tidal** and log in, for exact matches;
+   - pick your normal browser;
+   - click **Use Eddy for links** and confirm.
+4. Optional: turn on **Start Playing Automatically**. macOS asks for the Accessibility permission.
+
+Eddy lives in the menu bar; it has no Dock icon.
 
 ## How it works
 
-Eddy registers as the macOS default browser and checks each clicked link locally:
+macOS sends clicked links to one app, the "default web browser". Eddy takes that slot, but it isn't a browser:
 
-- **Spotify link** → find the same track on your service (by title, artist and duration, or exactly by ISRC for Tidal) → open it in the native Apple Music or Tidal app
-- **Any other link** → passed straight to your real browser, with no network calls
+- **Spotify links** are looked up and opened in your streaming app.
+- **Every other link** goes straight to the browser you picked. Eddy doesn't load it, check it or keep it.
 
-## Architecture
+Links you click *inside* your browser stay in the browser; Eddy only sees links from other apps.
 
-- `crates/eddy-core`: Rust library that parses links and resolves them across services
-- `crates/eddy-cli`: command-line tool for development and testing
-- `crates/eddy-ffi`: UniFFI bindings for Swift
-- `macos/`: thin Swift/SwiftUI menu bar app (SwiftPM package), connected to the core through UniFFI
+## Privacy
 
-See [PLAN.md](PLAN.md) for the full analysis, market scan and roadmap, and [docs/tickets/](docs/tickets/) for the current work.
+Eddy has no server, no account of its own, no analytics and no tracking. Nothing is ever sent to the developer.
 
-## Development
+**What leaves your Mac, and only when needed:**
+
+| When | Sent to | What |
+|---|---|---|
+| You click a Spotify link | Spotify (`open.spotify.com`; short links also their link service, e.g. `spotify.link`) | The link's ID, to read the song's title, artists and length |
+| Converting to Apple Music | Apple (iTunes Search API) | Artist and title, your country |
+| Converting to Tidal | Deezer, then TIDAL | Artist and title (Deezer, for the song's ISRC code); the ISRC or a search and your country (TIDAL) |
+| Copy Spotify Link, and when you open Eddy's menu (so the link is ready) | Deezer, MusicBrainz, Spotify | Artist and title of the song playing, its ISRC code |
+
+Like any app on the internet, these services see your IP address. Ordinary (non-Spotify) links cause no network traffic at all.
+
+**What stays on your Mac:**
+
+- Matches found, for up to 30 days, so the same link opens instantly (`~/Library/Application Support/Eddy/cache.sqlite`). Older entries are deleted.
+- Your last 10 conversions (Recently Opened) and your settings, in Eddy's preferences.
+- Your Tidal login: access tokens, your TIDAL username and country, in the macOS Keychain, for this Mac only. Eddy never sees your password: you log in on TIDAL's own page.
+
+**Permissions** (all optional):
+
+- **Accessibility**, asked when you turn on autoplay or use Copy Spotify Link with Tidal: to press Play and to read which song TIDAL is playing. Used for nothing else.
+- **Automation → Music**, asked the first time you use Copy Spotify Link with Music: to ask Music which song is playing.
+- **Notifications**, asked when the setup window opens: to tell you when a link couldn't be matched exactly.
+
+**Disconnect Tidal:** Settings → Accounts → **Disconnect** deletes the login from your Mac, and Eddy stops using your TIDAL account right away.
+
+## Uninstall
+
+1. If you connected Tidal: Settings → Accounts → **Disconnect**.
+2. Set your normal browser back in **System Settings → Desktop & Dock → Default web browser**.
+3. Quit Eddy from its menu and delete it from Applications.
+4. Optional cleanup: remove Eddy under **Privacy & Security → Accessibility**, delete `~/Library/Application Support/Eddy`, and run `defaults delete com.respectwood.eddy` in Terminal to remove its settings.
+
+## Building from source
 
 Requirements: macOS 13+, the [Rust toolchain](https://rustup.rs) (stable), and the Xcode Command Line Tools (full Xcode not required).
 
 ```sh
 cargo test                                  # unit tests (no network)
 cargo test -- --ignored                     # live tests against Spotify, iTunes, Deezer
-scripts/build-app.sh                        # → dist/Eddy.app + zip (universal, ad-hoc signed)
+scripts/build-app.sh                        # → dist/Eddy.app + zip (universal, hardened runtime)
 ARCHS=arm64 scripts/build-app.sh            # faster, Apple silicon only
 ```
+
+For **Connect Tidal**, create a free app at [developer.tidal.com](https://developer.tidal.com), add the redirect URI `eddy://auth/tidal`, and put its client ID in `.env` (see `.env.example`) before building.
 
 Try the core without the app:
 
@@ -40,9 +93,22 @@ cargo run -p eddy-cli -- parse "https://open.spotify.com/intl-de/track/4uLU6hMCj
 cargo run -p eddy-cli -- resolve "https://open.spotify.com/track/4uLU6hMCjMI75M1A2tKUQC" --to apple-music --country DE
 ```
 
-For exact Tidal matches, create a free app at [developer.tidal.com](https://developer.tidal.com) and enter its client ID/secret in the app's settings (or set `TIDAL_CLIENT_ID` / `TIDAL_CLIENT_SECRET` for the CLI). Without them, Tidal opens a search instead.
+Layout:
 
-Before a release, run the [manual tests](docs/manual-tests.md).
+- `crates/eddy-core`: Rust library that parses links and finds them on other services
+- `crates/eddy-cli`: command-line tool for development and testing
+- `crates/eddy-ffi`: UniFFI bindings for Swift
+- `macos/`: the Swift/SwiftUI menu bar app
+
+[PLAN.md](PLAN.md) has the background and roadmap, [docs/tickets/](docs/tickets/) the current work, and [docs/manual-tests.md](docs/manual-tests.md) the checks before a release.
+
+## Security
+
+Found a vulnerability? Please report it privately, see [SECURITY.md](SECURITY.md).
+
+## Trademarks
+
+Eddy is an independent project. It isn't affiliated with, endorsed or sponsored by Spotify, TIDAL or Apple. Their names are used only to describe which links Eddy works with.
 
 ## License
 
