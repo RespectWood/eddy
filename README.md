@@ -9,7 +9,7 @@ A friend sends you a Spotify link in Messages, Slack or Mail. Instead of Spotify
 ## What it does
 
 - **Spotify → Apple Music or Tidal:** track and album links, including `spotify.link` short links and `spotify:` links, open in the Music or TIDAL app (the web player only if the app isn't installed). Tidal matches are exact when you connect your Tidal account; otherwise Tidal opens a search.
-- **Copy Spotify Link** (menu, ⇧⌘C): copies a Spotify link for the song playing in Tidal or Music, to share with friends who use Spotify.
+- **Copy Link for Current Song** (menu, ⇧⌘C): copies a link to the song playing in Tidal or Music, to share with a friend. Pick Tidal, Apple Music or Spotify from the submenu; ⇧⌘C copies one for your own service.
 - **Autoplay** (optional): presses Play once the song has opened.
 - **Recently Opened** in the menu, Disable/Enable, Launch at Login.
 
@@ -48,7 +48,7 @@ Eddy has no server, no account of its own, no analytics and no tracking. Nothing
 | You click a Spotify link | Spotify (`open.spotify.com`; short links also their link service, e.g. `spotify.link`) | The link's ID, to read the song's title, artists and length |
 | Converting to Apple Music | Apple (iTunes Search API) | Artist and title, your country |
 | Converting to Tidal | Deezer, then TIDAL | Artist and title (Deezer, for the song's ISRC code); the ISRC or a search and your country (TIDAL) |
-| Copy Spotify Link, and when you open Eddy's menu (so the link is ready) | Deezer, MusicBrainz, Spotify | Artist and title of the song playing, its ISRC code |
+| Copy Link for Current Song, and when you open Eddy's menu (so your default link is ready) | Spotify links: Deezer, MusicBrainz, Spotify. Apple Music links: Apple. Tidal links: Deezer, then TIDAL | Artist and title of the song playing, its ISRC code, your country (Apple Music, Tidal) |
 
 Like any app on the internet, these services see your IP address. Ordinary (non-Spotify) links cause no network traffic at all.
 
@@ -60,8 +60,8 @@ Like any app on the internet, these services see your IP address. Ordinary (non-
 
 **Permissions** (all optional):
 
-- **Accessibility**, asked when you turn on autoplay or use Copy Spotify Link with Tidal: to press Play and to read which song TIDAL is playing. Used for nothing else.
-- **Automation → Music**, asked the first time you use Copy Spotify Link with Music: to ask Music which song is playing.
+- **Accessibility**, asked when you turn on autoplay or copy a link while Tidal is playing: to press Play and to read which song TIDAL is playing. Used for nothing else.
+- **Automation → Music**, asked the first time you copy a link while Music is playing: to ask Music which song is playing.
 - **Notifications**, asked when the setup window opens: to tell you when a link couldn't be matched exactly.
 
 **Disconnect Tidal:** Settings → Accounts → **Disconnect** deletes the login from your Mac, and Eddy stops using your TIDAL account right away.

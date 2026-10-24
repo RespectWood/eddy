@@ -3,10 +3,11 @@
 //! ```text
 //! Eddy parse <url>
 //! Eddy resolve <url> --to tidal|apple-music [--country DE] [--cache <path>] [--explain]
-//! Eddy share --title <title> --artist <artist>… [--duration 4:10] [--explain]
+//! Eddy share --title <title> --artist <artist>… [--duration 4:10] [--to spotify|tidal|apple-music] [--country DE] [--explain]
 //! ```
 //!
-//! `share` finds the Spotify link for a song played elsewhere ("Copy Spotify Link").
+//! `share` finds the link for a song played elsewhere ("Copy Link for Current Song");
+//! Spotify unless `--to` says otherwise.
 //!
 //! `--explain` prints every candidate and its score to stderr.
 //!
@@ -16,14 +17,15 @@ use std::path::PathBuf;
 use std::process::ExitCode;
 
 use eddy_core::{
-    parse, NowPlaying, ResolveError, Resolver, ResolverConfig, Service, TidalAuth, TidalCredentials,
+    parse, NowPlaying, ResolveError, Resolver, ResolverConfig, Service, ShareTarget, TidalAuth,
+    TidalCredentials,
 };
 use serde_json::json;
 
 const USAGE: &str = "usage:
   eddy parse <url>
   eddy resolve <url> --to tidal|apple-music [--country DE] [--cache <path>] [--explain]
-  eddy share --title <title> --artist <artist>… [--duration 4:10] [--explain]";
+  eddy share --title <title> --artist <artist>… [--duration 4:10] [--to spotify|tidal|apple-music] [--country DE] [--explain]";
 
 fn main() -> ExitCode {
     let args: Vec<String> = std::env::args().skip(1).collect();
@@ -70,21 +72,9 @@ fn resolve(url: &str, options: &[String]) -> ExitCode {
         eprintln!("--to must be tidal or apple-music\n{USAGE}");
         return ExitCode::from(2);
     };
-    let tidal = match (
-        std::env::var("TIDAL_CLIENT_ID"),
-        std::env::var("TIDAL_CLIENT_SECRET"),
-    ) {
-        (Ok(client_id), Ok(client_secret)) => {
-            Some(TidalAuth::ClientCredentials(TidalCredentials {
-                client_id,
-                client_secret,
-            }))
-        }
-        _ => None,
-    };
     let resolver = Resolver::new(ResolverConfig {
         cache_path,
-        tidal,
+        tidal: tidal_from_env(),
         explain,
     });
     match resolver.resolve(url, service, &country) {
@@ -120,8 +110,26 @@ fn resolve(url: &str, options: &[String]) -> ExitCode {
     }
 }
 
+/// Developer credentials from `TIDAL_CLIENT_ID` / `TIDAL_CLIENT_SECRET`, if both are set.
+fn tidal_from_env() -> Option<TidalAuth> {
+    match (
+        std::env::var("TIDAL_CLIENT_ID"),
+        std::env::var("TIDAL_CLIENT_SECRET"),
+    ) {
+        (Ok(client_id), Ok(client_secret)) => {
+            Some(TidalAuth::ClientCredentials(TidalCredentials {
+                client_id,
+                client_secret,
+            }))
+        }
+        _ => None,
+    }
+}
+
 fn share(options: &[String]) -> ExitCode {
     let mut now = NowPlaying::default();
+    let mut to = Some(ShareTarget::Spotify);
+    let mut country = "US".to_string();
     let mut explain = false;
     let mut options = options.iter();
     while let Some(option) = options.next() {
@@ -133,6 +141,8 @@ fn share(options: &[String]) -> ExitCode {
             ("--title", Some(v)) => now.title = v.clone(),
             ("--artist", Some(v)) => now.artists.push(v.clone()),
             ("--duration", Some(v)) => now.duration_ms = parse_duration(v),
+            ("--to", Some(v)) => to = ShareTarget::parse(v),
+            ("--country", Some(v)) => country = v.clone(),
             _ => {
                 eprintln!("{USAGE}");
                 return ExitCode::from(2);
@@ -143,11 +153,16 @@ fn share(options: &[String]) -> ExitCode {
         eprintln!("--title and --artist are required\n{USAGE}");
         return ExitCode::from(2);
     }
+    let Some(to) = to else {
+        eprintln!("--to must be spotify, tidal or apple-music\n{USAGE}");
+        return ExitCode::from(2);
+    };
     let resolver = Resolver::new(ResolverConfig {
+        tidal: tidal_from_env(),
         explain,
         ..Default::default()
     });
-    let share = resolver.spotify_link(&now);
+    let share = resolver.share_link(&now, to, &country);
     println!(
         "{}",
         serde_json::to_string_pretty(&share).expect("serializable")

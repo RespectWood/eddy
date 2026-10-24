@@ -59,8 +59,8 @@ final class AppModel: ObservableObject {
             browserBundleID = Browsers.currentDefault() ?? Browsers.safari
         }
         DebugCommands.simulateClick = { [weak self] url in self?.handle(url) }
-        DebugCommands.copySpotifyLink = { [weak self] in self?.copySpotifyLink() }
-        DebugCommands.prefetchSpotifyLink = { [weak self] in self?.prefetchSpotifyLink() }
+        DebugCommands.copyLink = { [weak self] target in self?.copyLink(to: target) }
+        DebugCommands.prefetchShareLink = { [weak self] in self?.prefetchShareLink() }
         tidalAccount.onChange = { [weak self] in
             self?.resetResolver()
             self?.objectWillChange.send()
@@ -168,9 +168,7 @@ final class AppModel: ObservableObject {
         let click = latestClick
         guard let service else { return }
         let resolver = resolver()
-        // While connected, Tidal lookups use the account's country.
-        let country = (service == .tidal ? tidalAccount.country : nil)
-            ?? Locale.current.region?.identifier ?? "US"
+        let country = lookupCountry(for: service == .tidal ? .tidal : .appleMusic)
         // The URL is private: it shows what was played, and `si=` who shared it.
         log.info("resolving a link from \(url.host ?? "?", privacy: .public): \(url.absoluteString, privacy: .private)")
         Task.detached(priority: .userInitiated) {
@@ -256,72 +254,89 @@ final class AppModel: ObservableObject {
         }
     }
 
-    // MARK: - Copy Spotify Link
+    // MARK: - Copy Link for Current Song
 
-    /// A lookup started when the menu opened, so the link is usually ready by the time
-    /// the user clicks "Copy Spotify Link". Nothing runs in the background otherwise.
-    private var prefetched: (task: Task<(Player.Reading, SpotifyShare?), Never>, started: Date)?
+    /// Where "Copy Link for Current Song" (⇧⌘C) points by default: the user's own
+    /// service, so friends on it can open the song. Spotify until a service is chosen.
+    var shareTarget: ShareTarget {
+        switch service {
+        case .tidal: .tidal
+        case .appleMusic: .appleMusic
+        case nil: .spotify
+        }
+    }
+
+    /// A lookup started when the menu opened (for `shareTarget`), so the link is usually
+    /// ready by the time the user clicks. Nothing runs in the background otherwise.
+    private var prefetched: (task: Task<(Player.Reading, SongShare?), Never>, target: ShareTarget, started: Date)?
     /// Older lookups may be for a song that has ended since.
     private static let prefetchMaxAge: TimeInterval = 20
 
     /// Called when the menu opens. Never prompts for a permission (that waits for the click).
-    func prefetchSpotifyLink() {
+    func prefetchShareLink() {
+        let target = shareTarget
         // Menu reopened right away: the running lookup is still current.
-        if let prefetched, Date().timeIntervalSince(prefetched.started) < 3 { return }
+        if let prefetched, prefetched.target == target, Date().timeIntervalSince(prefetched.started) < 3 { return }
         let resolver = resolver()
         let preferred = service
+        let country = lookupCountry(for: target)
         let task = Task.detached(priority: .utility) {
-            Self.lookUpSpotifyLink(resolver, preferring: preferred, mayPrompt: false)
+            Self.lookUpLink(resolver, preferring: preferred, to: target, country: country, mayPrompt: false)
         }
-        prefetched = (task, Date())
+        prefetched = (task, target, Date())
     }
 
-    /// Copies a Spotify link for the song playing in Tidal or Music, to share with
-    /// friends who use Spotify.
-    func copySpotifyLink() {
+    /// Copies a link to the song playing in Tidal or Music, to share with friends:
+    /// on `target`, or on `shareTarget` by default.
+    func copyLink(to target: ShareTarget? = nil) {
+        let target = target ?? shareTarget
         let resolver = resolver()
         let preferred = service
-        let pending = prefetched.flatMap { Date().timeIntervalSince($0.started) < Self.prefetchMaxAge ? $0.task : nil }
+        let country = lookupCountry(for: target)
+        let pending = prefetched.flatMap {
+            $0.target == target && Date().timeIntervalSince($0.started) < Self.prefetchMaxAge ? $0.task : nil
+        }
         prefetched = nil
         let clicked = Date()
         Task.detached(priority: .userInitiated) {
             var (reading, share) = await pending?.value ?? (.nothingPlaying, nil)
             // Without a usable prefetch (none, or it stopped at a permission), look up now.
             if share == nil {
-                (reading, share) = Self.lookUpSpotifyLink(resolver, preferring: preferred, mayPrompt: true)
+                (reading, share) = Self.lookUpLink(resolver, preferring: preferred, to: target, country: country, mayPrompt: true)
             }
             guard case let .song(song, source) = reading, let share else {
                 let unreadable = reading
                 await MainActor.run { self.reportUnreadable(unreadable) }
                 return
             }
-            DebugCommands.log(String(format: "copy Spotify link from %@: %@ %@ (%@, ready %.2fs after the click)",
-                                     "\(source)", share.exact ? "exact" : "search", share.url,
+            DebugCommands.log(String(format: "copy %@ link from %@: %@ %@ (%@, ready %.2fs after the click)",
+                                     target.displayName, "\(source)", share.exact ? "exact" : "search", share.url,
                                      pending == nil ? "no prefetch" : "prefetched", Date().timeIntervalSince(clicked)))
             await MainActor.run {
                 NSPasteboard.general.clearContents()
                 NSPasteboard.general.setString(share.url, forType: .string)
                 let name = "\(song.artists.first ?? share.artist) – \(share.title)"
                 if share.exact {
-                    Notifier.post(title: "Copied Spotify link", body: name)
+                    Notifier.post(title: "Copied \(target.displayName) link", body: name)
                 } else {
-                    Notifier.post(title: "Copied Spotify search link", body: "\(name) wasn't found exactly, so the link searches Spotify for it.")
+                    Notifier.post(title: "Copied \(target.displayName) search link",
+                                  body: "\(name) wasn't found exactly, so the link searches \(target.displayName) for it.")
                 }
             }
         }
     }
 
     /// Blocking: reads the player, then looks up the link.
-    nonisolated private static func lookUpSpotifyLink(
-        _ resolver: Resolver, preferring preferred: Service?, mayPrompt: Bool
-    ) -> (Player.Reading, SpotifyShare?) {
+    nonisolated private static func lookUpLink(
+        _ resolver: Resolver, preferring preferred: Service?, to target: ShareTarget, country: String, mayPrompt: Bool
+    ) -> (Player.Reading, SongShare?) {
         let reading = Player.read(preferring: preferred, mayPrompt: mayPrompt)
         guard case let .song(song, _) = reading else { return (reading, nil) }
-        return (reading, resolver.spotifyLink(nowPlaying: song))
+        return (reading, resolver.shareLink(nowPlaying: song, to: target, country: country))
     }
 
     private func reportUnreadable(_ reading: Player.Reading) {
-        DebugCommands.log("copy Spotify link: \(reading)")
+        DebugCommands.log("copy link: \(reading)")
         switch reading {
         case .needsAccessibility:
             AX.requestTrust()
@@ -351,6 +366,12 @@ final class AppModel: ObservableObject {
         guard let url = URL(string: item.originalURL),
               ["http", "https", "spotify"].contains(url.scheme?.lowercased() ?? "") else { return }
         passThrough(url)
+    }
+
+    /// The catalog country for lookups: while Tidal is connected, Tidal lookups use the
+    /// account's country; everything else the Mac's region.
+    private func lookupCountry(for target: ShareTarget) -> String {
+        (target == .tidal ? tidalAccount.country : nil) ?? Locale.current.region?.identifier ?? "US"
     }
 
     // MARK: - Resolver
@@ -409,6 +430,19 @@ enum TidalLandingPage: String {
     /// The track's album, with the song highlighted.
     case album
     case artist
+}
+
+extension ShareTarget: CaseIterable, Identifiable {
+    public static var allCases: [ShareTarget] { [.tidal, .appleMusic, .spotify] }
+    public var id: String { displayName }
+
+    var displayName: String {
+        switch self {
+        case .spotify: "Spotify"
+        case .appleMusic: "Apple Music"
+        case .tidal: "Tidal"
+        }
+    }
 }
 
 extension Service: CaseIterable, Identifiable {

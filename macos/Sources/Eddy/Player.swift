@@ -1,6 +1,6 @@
 import AppKit
 
-/// Reads the song that Tidal or Music is playing (or has paused), for "Copy Spotify Link".
+/// Reads the song that Tidal or Music is playing (or has paused), for "Copy Link for Current Song".
 enum Player {
     enum Reading {
         case song(NowPlaying, Service)

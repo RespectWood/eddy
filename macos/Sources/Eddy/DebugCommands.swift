@@ -9,7 +9,7 @@ import AppKit
 ///   eddy://debug/dump?app=tidal|music     → debug/ax-<app>.txt (the app's UI tree)
 ///   eddy://debug/autoplay?app=tidal|music&title=…&artist=…&album=…&kind=track|album&url=<opened url>
 ///   eddy://debug/click?url=<spotify link>  → handled exactly like a clicked link
-///   eddy://debug/share                     → "Copy Spotify Link for Current Song"
+///   eddy://debug/share[?to=spotify|music|tidal] → "Copy Link for Current Song" (default target without `to`)
 ///   eddy://debug/prefetch                  → what opening the menu does (look up ahead)
 ///
 /// Output and logs go to ~/Library/Application Support/eddy/debug/.
@@ -25,10 +25,10 @@ enum DebugCommands {
 
     /// Set by `AppModel`: routes a URL as if the user had clicked it.
     @MainActor static var simulateClick: ((URL) -> Void)?
-    /// Set by `AppModel`: the "Copy Spotify Link for Current Song" menu item.
-    @MainActor static var copySpotifyLink: (() -> Void)?
+    /// Set by `AppModel`: "Copy Link for Current Song" (`nil`: the default target).
+    @MainActor static var copyLink: ((ShareTarget?) -> Void)?
     /// Set by `AppModel`: the lookup that starts when the menu opens.
-    @MainActor static var prefetchSpotifyLink: (() -> Void)?
+    @MainActor static var prefetchShareLink: (() -> Void)?
 
     static var directory: URL {
         let dir = FileManager.default.urls(for: .applicationSupportDirectory, in: .userDomainMask)[0]
@@ -68,12 +68,18 @@ enum DebugCommands {
         }
         if url.path == "/prefetch" {
             log("simulated menu open (prefetch)")
-            prefetchSpotifyLink?()
+            prefetchShareLink?()
             return
         }
         if url.path == "/share" {
-            log("simulated Copy Spotify Link")
-            copySpotifyLink?()
+            let target: ShareTarget? = switch param("to")?.lowercased() {
+            case "spotify": .spotify
+            case "tidal": .tidal
+            case "music", "apple-music": .appleMusic
+            default: nil
+            }
+            log("simulated Copy Link (\(target.map { "\($0)" } ?? "default"))")
+            copyLink?(target)
             return
         }
         guard let service = param("app").flatMap(service(named:)) else {

@@ -157,7 +157,7 @@ impl Resolver {
         Ok(conversion)
     }
 
-    fn find_on_tidal(
+    pub(crate) fn find_on_tidal(
         &self,
         meta: &SpotifyMeta,
         country: &str,
@@ -233,7 +233,7 @@ fn not_found(
 }
 
 /// Two-letter uppercase country code; falls back to US.
-fn normalize_country(country: &str) -> String {
+pub(crate) fn normalize_country(country: &str) -> String {
     let c = country.trim();
     if c.len() == 2 && c.bytes().all(|b| b.is_ascii_alphabetic()) {
         c.to_ascii_uppercase()

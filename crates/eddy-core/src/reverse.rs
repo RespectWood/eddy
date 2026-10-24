@@ -1,10 +1,13 @@
-//! The reverse direction: a Spotify link for the song playing in Tidal or Music, to
-//! share with friends who use Spotify. No Spotify API (it needs Spotify Premium):
+//! The reverse direction: a link for the song playing in Tidal or Music, to share with
+//! friends ("Copy Link for Current Song"). Links point to Spotify, Apple Music or TIDAL.
 //!
+//! Spotify, without the Spotify API (it needs Spotify Premium):
 //! 1. Deezer → the recording's ISRCs (title, artists, duration).
 //! 2. MusicBrainz → Spotify track IDs linked to those ISRCs.
 //! 3. Spotify's embed page → each candidate's metadata; the best match wins.
-//! 4. Nothing found → a Spotify search link, which always works.
+//!
+//! Apple Music and TIDAL use the same lookups as clicked Spotify links (iTunes Search;
+//! Deezer ISRC → TIDAL API). Nothing found → a search link, which always works.
 
 use serde::{Deserialize, Serialize};
 use url::Url;
@@ -12,9 +15,10 @@ use url::Url;
 use crate::explain::printable;
 use crate::link::{SpotifyKind, SpotifyLink};
 use crate::matching::{normalize, score, Candidate, THRESHOLD};
-use crate::resolve::Resolver;
+use crate::resolve::{normalize_country, Resolver};
 use crate::spotify::SpotifyMeta;
-use crate::{deezer, musicbrainz, spotify};
+use crate::target::{search_urls, Service};
+use crate::{deezer, itunes, musicbrainz, spotify};
 
 /// Deezer ISRCs to try on MusicBrainz (one request per second each).
 const MAX_ISRCS: usize = 3;
@@ -31,9 +35,46 @@ pub struct NowPlaying {
     pub duration_ms: Option<u64>,
 }
 
+/// Where a copied link points.
+#[derive(Debug, Clone, Copy, PartialEq, Eq, Hash, Serialize, Deserialize)]
+#[serde(rename_all = "kebab-case")]
+pub enum ShareTarget {
+    Spotify,
+    AppleMusic,
+    Tidal,
+}
+
+impl ShareTarget {
+    pub fn as_str(self) -> &'static str {
+        match self {
+            Self::Spotify => "spotify",
+            Self::AppleMusic => "apple-music",
+            Self::Tidal => "tidal",
+        }
+    }
+
+    pub fn parse(s: &str) -> Option<Self> {
+        match s.to_ascii_lowercase().as_str() {
+            "spotify" => Some(Self::Spotify),
+            other => Service::parse(other).map(Self::from),
+        }
+    }
+}
+
+impl From<Service> for ShareTarget {
+    fn from(service: Service) -> Self {
+        match service {
+            Service::AppleMusic => Self::AppleMusic,
+            Service::Tidal => Self::Tidal,
+        }
+    }
+}
+
 #[derive(Debug, Clone, PartialEq, Eq, Serialize, Deserialize)]
-pub struct SpotifyShare {
-    /// `https://open.spotify.com/track/<id>`, or a search link when not `exact`.
+pub struct SongShare {
+    pub target: ShareTarget,
+    /// A web link to the track (`open.spotify.com`, `music.apple.com`, `tidal.com`),
+    /// or a search link when not `exact`. Web links open for the recipient anywhere.
     pub url: String,
     pub exact: bool,
     pub title: String,
@@ -61,10 +102,13 @@ impl NowPlaying {
 }
 
 impl Resolver {
-    /// Never fails: lookup errors fall back to the search link. Blocking network calls.
-    pub fn spotify_link(&self, now: &NowPlaying) -> SpotifyShare {
+    /// A link to the song on `to`. `country` picks the Apple Music / TIDAL catalog
+    /// (Spotify links work everywhere). Never fails: lookup errors fall back to a search
+    /// link. Blocking network calls.
+    pub fn share_link(&self, now: &NowPlaying, to: ShareTarget, country: &str) -> SongShare {
         let meta = now.meta();
-        let key = cache_key(&meta);
+        let country = normalize_country(country);
+        let key = cache_key(&meta, to, &country);
         if let Some(mut hit) = self
             .with_cache(|c| c.get_share(&key))
             .flatten()
@@ -73,7 +117,7 @@ impl Resolver {
             hit.from_cache = true;
             return hit;
         }
-        let exact = match self.find_on_spotify(&meta) {
+        let exact = match self.find_share(&meta, to, &country) {
             Ok(found) => found,
             Err(e) => {
                 if self.explain {
@@ -82,18 +126,39 @@ impl Resolver {
                 None
             }
         };
-        let share = SpotifyShare {
+        let share = SongShare {
+            target: to,
             exact: exact.is_some(),
-            url: exact.unwrap_or_else(|| search_url(&meta)),
+            url: exact.unwrap_or_else(|| search_url(&meta, to, &country)),
             title: meta.title.clone(),
             artist: meta.artist_line(),
             from_cache: false,
         };
-        // Only exact links are cached: MusicBrainz may learn the song later.
+        // Only exact links are cached: the song may be found later (MusicBrainz learns
+        // new links; a Tidal login may be connected).
         if share.exact {
             self.with_cache(|c| c.put_share(&key, &share));
         }
         share
+    }
+
+    /// The song's web link on `to`, if found exactly.
+    fn find_share(
+        &self,
+        meta: &SpotifyMeta,
+        to: ShareTarget,
+        country: &str,
+    ) -> Result<Option<String>, crate::ResolveError> {
+        if meta.title.is_empty() || meta.artists.is_empty() {
+            return Ok(None);
+        }
+        Ok(match to {
+            ShareTarget::Spotify => self.find_on_spotify(meta)?,
+            ShareTarget::AppleMusic => {
+                itunes::find(&self.http, meta, country, self.explain)?.map(|f| f.urls.web_url)
+            }
+            ShareTarget::Tidal => self.find_on_tidal(meta, country)?.map(|f| f.urls.web_url),
+        })
     }
 
     fn find_on_spotify(&self, meta: &SpotifyMeta) -> Result<Option<String>, crate::ResolveError> {
@@ -171,20 +236,34 @@ impl Resolver {
     }
 }
 
-/// `https://open.spotify.com/search/<primary artist> <title>`
-fn search_url(meta: &SpotifyMeta) -> String {
-    let mut url = Url::parse("https://open.spotify.com/search/").expect("valid URL");
+/// A search for "<primary artist> <title>" on `to`, as a web link.
+fn search_url(meta: &SpotifyMeta, to: ShareTarget, country: &str) -> String {
     let query = format!("{} {}", meta.primary_artist(), normalize(&meta.title));
-    url.path_segments_mut()
-        .expect("base URL")
-        .pop_if_empty()
-        .push(query.trim());
-    url.to_string()
+    match to {
+        // `https://open.spotify.com/search/<query>`
+        ShareTarget::Spotify => {
+            let mut url = Url::parse("https://open.spotify.com/search/").expect("valid URL");
+            url.path_segments_mut()
+                .expect("base URL")
+                .pop_if_empty()
+                .push(query.trim());
+            url.to_string()
+        }
+        ShareTarget::AppleMusic => search_urls(Service::AppleMusic, &query, country).web_url,
+        ShareTarget::Tidal => search_urls(Service::Tidal, &query, country).web_url,
+    }
 }
 
-fn cache_key(meta: &SpotifyMeta) -> String {
+/// Target, catalog country (none for Spotify: its links work everywhere), artist, title.
+fn cache_key(meta: &SpotifyMeta, to: ShareTarget, country: &str) -> String {
+    let country = if to == ShareTarget::Spotify {
+        ""
+    } else {
+        country
+    };
     format!(
-        "{}\u{1f}{}",
+        "{}\u{1f}{country}\u{1f}{}\u{1f}{}",
+        to.as_str(),
         normalize(meta.primary_artist()),
         normalize(&meta.title)
     )
@@ -206,9 +285,18 @@ mod tests {
 
     #[test]
     fn builds_search_urls() {
+        let usher = usher().meta();
         assert_eq!(
-            search_url(&usher().meta()),
+            search_url(&usher, ShareTarget::Spotify, "DE"),
             "https://open.spotify.com/search/USHER%20yeah"
+        );
+        assert_eq!(
+            search_url(&usher, ShareTarget::AppleMusic, "DE"),
+            "https://music.apple.com/de/search?term=USHER%20yeah"
+        );
+        assert_eq!(
+            search_url(&usher, ShareTarget::Tidal, "DE"),
+            "https://listen.tidal.com/search?q=USHER%20yeah"
         );
         let meta = NowPlaying {
             title: "Hyperballad".into(),
@@ -217,16 +305,43 @@ mod tests {
         }
         .meta();
         assert_eq!(
-            search_url(&meta),
+            search_url(&meta, ShareTarget::Spotify, "DE"),
             "https://open.spotify.com/search/Bj%C3%B6rk%20hyperballad"
         );
     }
 
     #[test]
+    fn cache_keys_separate_targets_and_catalogs() {
+        let meta = usher().meta();
+        let spotify = cache_key(&meta, ShareTarget::Spotify, "DE");
+        assert_eq!(spotify, cache_key(&meta, ShareTarget::Spotify, "US"));
+        assert_ne!(
+            cache_key(&meta, ShareTarget::Tidal, "DE"),
+            cache_key(&meta, ShareTarget::Tidal, "US")
+        );
+        assert_ne!(spotify, cache_key(&meta, ShareTarget::AppleMusic, "DE"));
+    }
+
+    #[test]
+    fn parses_targets() {
+        assert_eq!(ShareTarget::parse("Spotify"), Some(ShareTarget::Spotify));
+        assert_eq!(ShareTarget::parse("music"), Some(ShareTarget::AppleMusic));
+        assert_eq!(ShareTarget::parse("tidal"), Some(ShareTarget::Tidal));
+        assert_eq!(ShareTarget::parse("deezer"), None);
+    }
+
+    #[test]
     fn empty_player_falls_back_without_network() {
         let resolver = Resolver::new(ResolverConfig::default());
-        let share = resolver.spotify_link(&NowPlaying::default());
-        assert!(!share.exact);
+        for to in [
+            ShareTarget::Spotify,
+            ShareTarget::AppleMusic,
+            ShareTarget::Tidal,
+        ] {
+            let share = resolver.share_link(&NowPlaying::default(), to, "DE");
+            assert!(!share.exact);
+            assert_eq!(share.target, to);
+        }
     }
 
     /// Hits Deezer, MusicBrainz and Spotify: `cargo test -- --ignored`.
@@ -234,10 +349,24 @@ mod tests {
     #[ignore]
     fn live_usher_gets_an_exact_link() {
         let resolver = Resolver::new(ResolverConfig::default());
-        let share = resolver.spotify_link(&usher());
+        let share = resolver.share_link(&usher(), ShareTarget::Spotify, "DE");
         assert!(share.exact, "{share:?}");
         assert!(
             share.url.starts_with("https://open.spotify.com/track/"),
+            "{}",
+            share.url
+        );
+    }
+
+    /// Hits the iTunes Search API: `cargo test -- --ignored`.
+    #[test]
+    #[ignore]
+    fn live_usher_gets_an_apple_music_link() {
+        let resolver = Resolver::new(ResolverConfig::default());
+        let share = resolver.share_link(&usher(), ShareTarget::AppleMusic, "DE");
+        assert!(share.exact, "{share:?}");
+        assert!(
+            share.url.starts_with("https://music.apple.com/de/album/"),
             "{}",
             share.url
         );

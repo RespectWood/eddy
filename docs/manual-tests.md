@@ -40,7 +40,7 @@ To start over with a clean first run: quit Eddy from its menu, then run
 | A2 | Same launch | The setup window opens and comes to the front | |
 | A3 | Check the icon in light and dark mode (System Settings → Appearance) | Icon is legible in both | |
 | A4 | Open the app a second time from Finder while it's running | Still **one** menu bar icon. The setup window comes to the front | |
-| A5 | Click the menu bar icon | Menu groups, divided by lines: status line, "Not active: set up Eddy…", Disable Eddy / Copy Spotify Link for Current Song, Recently Opened / Open Spotify Links In, Start Playing Automatically / Open Other Links In, Launch at Login / Settings…, About, Quit | |
+| A5 | Click the menu bar icon | Menu groups, divided by lines: status line, "Not active: set up Eddy…", Disable Eddy / Copy Link for Current Song ▸ (Tidal, Apple Music, Spotify), Recently Opened / Open Spotify Links In, Start Playing Automatically / Open Other Links In, Launch at Login / Settings…, About, Quit | |
 
 ## B. Setup and default link handler
 
@@ -189,19 +189,23 @@ One-time setup: in developer.tidal.com → your app, add the redirect URI `eddy:
 | L6 | Click Connect Tidal, then **Cancel** in Settings without logging in | Row goes back to "Connect Tidal", no error | |
 | L7 | Revoke Eddy's access in your Tidal account settings, wait an hour (token expiry) and click a link | Search results + "Your Tidal login expired" notification; row shows **Reconnect Tidal** | |
 
-## O. Copy Spotify Link (ticket 0009)
+## O. Copy Link for Current Song (ticket 0009)
 
-Needs the Accessibility permission (as for autoplay). Tidal's window must be on the current desktop.
+Needs the Accessibility permission (as for autoplay). Tidal's window must be on the current desktop. The submenu **Copy Link for Current Song** lists Tidal, Apple Music and Spotify; ⇧⌘C is on your own service (Open Spotify Links In). O1–O7 copy Spotify links.
 
 | # | Do this | Expected | Result |
 |---|---|---|---|
-| O1 | Play *Yeah!* in Tidal, menu → **Copy Spotify Link for Current Song**, paste into Messages | Notification "Copied Spotify link"; the pasted link opens *Yeah!* on Spotify | ✅ (clipboard verified, 2026-10-23) |
+| O1 | Play *Yeah!* in Tidal, menu → **Copy Link for Current Song → Spotify**, paste into Messages | Notification "Copied Spotify link"; the pasted link opens *Yeah!* on Spotify | ✅ (clipboard verified, 2026-10-23) |
 | O2 | Same with a niche song (e.g. Robyn – Dancing On My Own) | "Copied Spotify search link"; the link opens a Spotify search for the song | |
 | O3 | Pause the song, copy again | Still copies the paused song | |
 | O4 | Close Tidal's window (or move it to another desktop), copy | "Can't see Tidal's player" notification, clipboard unchanged | |
 | O5 | Quit Tidal and Music, copy | "Nothing is playing" notification | |
 | O7 | Play a song never copied before. Open the menu, wait ~2 s, click Copy | Link copied right away (log: "prefetched, ready 0.0Xs after the click"). Just opening and closing the menu leaves the clipboard unchanged | |
 | O6 | Music playing (any song, library or catalog) | First time: macOS asks to let Eddy control Music; then the link is copied | |
+| O8 | Service Tidal, Tidal connected. Play *Yeah!*, menu → **Copy Link for Current Song → Tidal** (⇧⌘C) | "Copied Tidal link"; the link (`tidal.com/browse/track/…`) opens *Yeah!* | |
+| O9 | Same, **Copy Link for Current Song → Apple Music** | "Copied Apple Music link"; the link (`music.apple.com/…?i=…`) opens *Yeah!* | |
+| O10 | Disconnect Tidal, copy the Tidal link again | "Copied Tidal search link"; the link opens a Tidal search | |
+| O11 | Switch Open Spotify Links In to Apple Music, open the submenu | Still Tidal, Apple Music, Spotify in that order; ⇧⌘C is now shown on Apple Music | |
 
 ## J. Undo
 

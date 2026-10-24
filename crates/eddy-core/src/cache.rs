@@ -7,7 +7,7 @@ use rusqlite::{params, Connection, OptionalExtension};
 
 use crate::link::SpotifyLink;
 use crate::resolve::Conversion;
-use crate::reverse::SpotifyShare;
+use crate::reverse::SongShare;
 use crate::target::Service;
 
 /// Catalogs change (regional availability, re-releases), so entries expire. Expired
@@ -18,9 +18,10 @@ const MAX_AGE_SECS: i64 = 30 * 24 * 60 * 60;
 /// Bump when matching changes enough that earlier results shouldn't be reused.
 /// v2: Tidal/Apple Music prefer the original release over compilations (ticket 0002).
 const TABLE: &str = "conversions_v2";
-const OLD_TABLES: &[&str] = &["conversions"];
-/// Spotify links for songs played elsewhere ("Copy Spotify Link"), exact matches only.
-const SHARE_TABLE: &str = "spotify_links_v1";
+const OLD_TABLES: &[&str] = &["conversions", "spotify_links_v1"];
+/// Links for songs played elsewhere ("Copy Link for Current Song"), exact matches only.
+/// v2: Spotify, Apple Music and TIDAL links (v1 held Spotify links only).
+const SHARE_TABLE: &str = "share_links_v2";
 
 pub(crate) struct Cache {
     conn: Connection,
@@ -129,8 +130,8 @@ impl Cache {
 }
 
 impl Cache {
-    /// `song` identifies the song played elsewhere (normalized artist and title).
-    pub fn get_share(&self, song: &str) -> Option<SpotifyShare> {
+    /// `song` identifies the target, catalog and song (normalized artist and title).
+    pub fn get_share(&self, song: &str) -> Option<SongShare> {
         let json: Option<String> = self
             .conn
             .query_row(
@@ -144,7 +145,7 @@ impl Cache {
         json.and_then(|j| serde_json::from_str(&j).ok())
     }
 
-    pub fn put_share(&self, song: &str, share: &SpotifyShare) {
+    pub fn put_share(&self, song: &str, share: &SongShare) {
         let Ok(json) = serde_json::to_string(share) else {
             return;
         };
@@ -167,6 +168,7 @@ fn now() -> i64 {
 mod tests {
     use super::*;
     use crate::link::SpotifyKind;
+    use crate::reverse::ShareTarget;
 
     #[test]
     fn round_trips_conversions() {
@@ -216,7 +218,8 @@ mod tests {
             .unwrap();
         cache.put_share(
             "new",
-            &SpotifyShare {
+            &SongShare {
+                target: ShareTarget::Spotify,
                 url: "https://open.spotify.com/track/1M18Qdzl9xFVRmUm66zn34".into(),
                 exact: true,
                 title: "Yeah!".into(),
@@ -241,7 +244,8 @@ mod tests {
     #[test]
     fn round_trips_share_links() {
         let cache = Cache::in_memory().unwrap();
-        let share = SpotifyShare {
+        let share = SongShare {
+            target: ShareTarget::Spotify,
             url: "https://open.spotify.com/track/1M18Qdzl9xFVRmUm66zn34".into(),
             exact: true,
             title: "Yeah!".into(),

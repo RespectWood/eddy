@@ -11,6 +11,7 @@
 - Cache entries from earlier versions are discarded.
 - **Copy Spotify Link for Current Song** (menu, ⇧⌘C): reads the song playing in Tidal (Accessibility) or Music (AppleScript) and copies its Spotify link, found through Deezer (ISRC), MusicBrainz and Spotify's embed page; no Spotify account needed. Falls back to a Spotify search link. The lookup starts when the menu opens, so the link is usually ready by the click (ticket 0009).
 - `eddy share --title … --artist …` CLI command.
+- **Copy Link for Current Song** replaces Copy Spotify Link: a submenu copies a link to the song for Tidal, Apple Music or Spotify, and ⇧⌘C copies one for your own service. Links are web links that open on any device; without an exact match, a search link. `eddy share --to spotify|tidal|apple-music --country DE`.
 - **Security hardening** (ticket 0010):
   - Every build is signed with the hardened runtime, so no other process can inject code into Eddy and use its Accessibility or Automation permission.
   - The Tidal developer client secret moved from preferences to the Keychain (migrated on first launch). Keychain items stay on this Mac (not restored from backups onto another one).
