@@ -1,7 +1,9 @@
 //! Resolves a Spotify link to the same item on another service.
 
+use std::collections::HashMap;
 use std::path::PathBuf;
 use std::sync::Mutex;
+use std::time::Instant;
 
 use serde::{Deserialize, Serialize};
 
@@ -59,6 +61,8 @@ pub struct Resolver {
     cache: Option<Mutex<Cache>>,
     tidal: Option<Tidal>,
     pub(crate) explain: bool,
+    /// Share links found to have no exact match, and when (see `share_link`).
+    pub(crate) share_misses: Mutex<HashMap<String, Instant>>,
 }
 
 impl Resolver {
@@ -73,6 +77,7 @@ impl Resolver {
             cache,
             tidal: config.tidal.map(Tidal::new),
             explain: config.explain,
+            share_misses: Mutex::default(),
         }
     }
 

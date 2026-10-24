@@ -23,6 +23,7 @@
   - IDs and ISRCs from API responses are checked before they go into URLs.
   - CI: read-only token, actions pinned to commits, `cargo audit`, Dependabot.
   - Eddy only accepts the link types and HTML files it's registered for, and checks every link's scheme before opening it.
+- Copy Link looks up your default link when you open its submenu, not whenever the menu opens, and songs without an exact match aren't looked up again for 10 minutes. Saves TIDAL's per-app quota (shared by all users).
 - TIDAL's logo (linking to tidal.com) in Settings → Accounts, and "TIDAL" written in capitals throughout the app, as TIDAL's Design Guidelines ask.
 - Cached matches older than 30 days are now deleted, not just ignored. From the TIDAL profile only your country is kept, never your username, email or name.
 

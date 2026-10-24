@@ -9,6 +9,8 @@
 //! Apple Music and TIDAL use the same lookups as clicked Spotify links (iTunes Search;
 //! Deezer ISRC → TIDAL API). Nothing found → a search link, which always works.
 
+use std::time::{Duration, Instant};
+
 use serde::{Deserialize, Serialize};
 use url::Url;
 
@@ -24,6 +26,9 @@ use crate::{deezer, itunes, musicbrainz, spotify};
 const MAX_ISRCS: usize = 3;
 /// Spotify candidates to check on the embed page.
 const MAX_CANDIDATES: usize = 4;
+/// How long a song without an exact match isn't looked up again. Opening the menu
+/// prefetches the link, and every lookup counts against TIDAL's per-app quota.
+const MISS_TTL: Duration = Duration::from_secs(10 * 60);
 
 /// What the player shows.
 #[derive(Debug, Clone, Default, PartialEq, Eq)]
@@ -117,7 +122,7 @@ impl Resolver {
             hit.from_cache = true;
             return hit;
         }
-        let exact = match self.find_share(&meta, to, &country) {
+        let exact = match self.find_share_unless_missed(&meta, to, &country, &key) {
             Ok(found) => found,
             Err(e) => {
                 if self.explain {
@@ -140,6 +145,33 @@ impl Resolver {
             self.with_cache(|c| c.put_share(&key, &share));
         }
         share
+    }
+
+    /// `find_share`, skipped when the same song had no exact match a few minutes ago.
+    /// Only "not found" is remembered: after a network error or rate limit the next try
+    /// may work.
+    fn find_share_unless_missed(
+        &self,
+        meta: &SpotifyMeta,
+        to: ShareTarget,
+        country: &str,
+        key: &str,
+    ) -> Result<Option<String>, crate::ResolveError> {
+        let mut misses = self.share_misses.lock().unwrap_or_else(|e| e.into_inner());
+        misses.retain(|_, at| at.elapsed() < MISS_TTL);
+        if misses.contains_key(key) && !self.explain {
+            return Ok(None);
+        }
+        // Not held during the lookup: other lookups shouldn't wait for this one.
+        drop(misses);
+        let found = self.find_share(meta, to, country)?;
+        if found.is_none() {
+            self.share_misses
+                .lock()
+                .unwrap_or_else(|e| e.into_inner())
+                .insert(key.to_string(), Instant::now());
+        }
+        Ok(found)
     }
 
     /// The song's web link on `to`, if found exactly.
@@ -328,6 +360,22 @@ mod tests {
         assert_eq!(ShareTarget::parse("music"), Some(ShareTarget::AppleMusic));
         assert_eq!(ShareTarget::parse("tidal"), Some(ShareTarget::Tidal));
         assert_eq!(ShareTarget::parse("deezer"), None);
+    }
+
+    #[test]
+    fn remembers_songs_without_an_exact_match() {
+        let resolver = Resolver::new(ResolverConfig::default());
+        // An empty player has no exact match, without any network call.
+        resolver.share_link(&NowPlaying::default(), ShareTarget::Tidal, "DE");
+        let key = cache_key(&NowPlaying::default().meta(), ShareTarget::Tidal, "DE");
+        assert!(resolver.share_misses.lock().unwrap().contains_key(&key));
+        // Expired misses are dropped on the next lookup.
+        resolver.share_misses.lock().unwrap().insert(
+            key.clone(),
+            Instant::now() - MISS_TTL - Duration::from_secs(1),
+        );
+        resolver.share_link(&NowPlaying::default(), ShareTarget::Spotify, "DE");
+        assert!(!resolver.share_misses.lock().unwrap().contains_key(&key));
     }
 
     #[test]

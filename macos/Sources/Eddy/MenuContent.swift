@@ -31,7 +31,7 @@ struct MenuContent: View {
             .keyboardShortcut("p")
         Divider()
 
-        // Tidal, Apple Music, Spotify; ⇧⌘C copies the default (your own service).
+        // TIDAL, Apple Music, Spotify; ⇧⌘C copies the default (your own service).
         Menu("Copy Link for Current Song") {
             ForEach(ShareTarget.allCases) { target in
                 if target == model.shareTarget {
@@ -41,6 +41,7 @@ struct MenuContent: View {
                     Button(target.displayName) { model.copyLink(to: target) }
                 }
             }
+            .onAppear { model.copyLinkMenuDidOpen() }
         }
 
         Menu("Recently Opened") {
@@ -106,8 +107,7 @@ struct MenuContent: View {
                 // The menu is rebuilt each time it opens: a cheap moment to re-check status.
                 model.refreshDefaultHandlerStatus()
                 launchAtLogin = LoginItem.isEnabled
-                // Start looking up the default link now, so "Copy … Link" is instant.
-                model.prefetchShareLink()
+                model.menuDidOpen()
             }
     }
 }

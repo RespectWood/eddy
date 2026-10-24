@@ -266,13 +266,42 @@ final class AppModel: ObservableObject {
         }
     }
 
-    /// A lookup started when the menu opened (for `shareTarget`), so the link is usually
-    /// ready by the time the user clicks. Nothing runs in the background otherwise.
+    /// A lookup started when the Copy Link submenu expanded (for `shareTarget`), so the
+    /// link is usually ready by the time the user clicks. Nothing runs in the background
+    /// otherwise.
     private var prefetched: (task: Task<(Player.Reading, SongShare?), Never>, target: ShareTarget, started: Date)?
     /// Older lookups may be for a song that has ended since.
     private static let prefetchMaxAge: TimeInterval = 20
 
-    /// Called when the menu opens. Never prompts for a permission (that waits for the click).
+    /// When the menu bar menu last opened (see `copyLinkMenuDidOpen`).
+    private var menuOpened = Date.distantPast
+
+    func menuDidOpen() {
+        menuOpened = Date()
+    }
+
+    /// The "Copy Link for Current Song" submenu expanded: look up the default link now,
+    /// so the click is instant. Only here, not when the menu opens: every lookup counts
+    /// against TIDAL's per-app quota, and most menu opens aren't for copying a link.
+    /// If SwiftUI builds the submenu together with the menu (it appears within a moment
+    /// of it), that isn't an expansion, so nothing is prefetched and the click looks up.
+    func copyLinkMenuDidOpen() {
+        let appeared = Date()
+        // Decided a moment later: the menu reports opening from its last item, so with
+        // an eagerly built submenu either one may come first.
+        DispatchQueue.main.asyncAfter(deadline: .now() + 0.2) { [self] in
+            let apart = appeared.timeIntervalSince(menuOpened)
+            guard abs(apart) > 0.15 else {
+                DebugCommands.log(String(format: "copy link submenu built with the menu (%.3fs apart); no prefetch", apart))
+                return
+            }
+            DebugCommands.log(String(format: "copy link submenu expanded %.2fs after the menu opened; prefetching", apart))
+            prefetchShareLink()
+        }
+    }
+
+    /// Looks up the default link ahead of a click. Never prompts for a permission (that
+    /// waits for the click).
     func prefetchShareLink() {
         let target = shareTarget
         // Menu reopened right away: the running lookup is still current.

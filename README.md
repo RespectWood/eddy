@@ -54,7 +54,7 @@ eddy has no server, no account of its own, no analytics and no tracking. Nothing
 | You click a Spotify link | Spotify (`open.spotify.com`; short links also their link service, e.g. `spotify.link`) | The link's ID, to read the song's title, artists and length |
 | Converting to Apple Music | Apple (iTunes Search API) | Artist and title, your country |
 | Converting to TIDAL | Deezer, then TIDAL | Artist and title (Deezer, for the song's ISRC code); the ISRC or a search and your country (TIDAL) |
-| Copy Link for Current Song, and when you open eddy's menu (so your default link is ready) | Spotify links: Deezer, MusicBrainz, Spotify. Apple Music links: Apple. TIDAL links: Deezer, then TIDAL | Artist and title of the song playing, its ISRC code, your country (Apple Music, TIDAL) |
+| Copy Link for Current Song, and when you open its submenu (so your default link is ready) | Spotify links: Deezer, MusicBrainz, Spotify. Apple Music links: Apple. TIDAL links: Deezer, then TIDAL | Artist and title of the song playing, its ISRC code, your country (Apple Music, TIDAL) |
 
 Like any app on the internet, these services see your IP address. Ordinary (non-Spotify) links cause no network traffic at all.
 

@@ -10,7 +10,7 @@ import AppKit
 ///   eddy://debug/autoplay?app=tidal|music&title=…&artist=…&album=…&kind=track|album&url=<opened url>
 ///   eddy://debug/click?url=<spotify link>  → handled exactly like a clicked link
 ///   eddy://debug/share[?to=spotify|music|tidal] → "Copy Link for Current Song" (default target without `to`)
-///   eddy://debug/prefetch                  → what opening the menu does (look up ahead)
+///   eddy://debug/prefetch                  → what expanding the Copy Link submenu does (look up ahead)
 ///
 /// Output and logs go to ~/Library/Application Support/eddy/debug/.
 enum DebugCommands {

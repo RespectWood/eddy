@@ -200,7 +200,7 @@ Needs the Accessibility permission (as for autoplay). TIDAL's window must be on 
 | O3 | Pause the song, copy again | Still copies the paused song | |
 | O4 | Close TIDAL's window (or move it to another desktop), copy | "Can't see TIDAL's player" notification, clipboard unchanged | |
 | O5 | Quit TIDAL and Music, copy | "Nothing is playing" notification | |
-| O7 | Play a song never copied before. Open the menu, wait ~2 s, click Copy | Link copied right away (log: "prefetched, ready 0.0Xs after the click"). Just opening and closing the menu leaves the clipboard unchanged | |
+| O7 | Play a song never copied before. Open the menu, hover **Copy Link for Current Song** for ~2 s, click TIDAL | Link copied right away (log: "submenu expanded …; prefetching", then "prefetched, ready 0.0Xs after the click"). If the log says "submenu built with the menu; no prefetch" instead, SwiftUI builds submenus eagerly: the copy still works, ~1 s slower. Just opening and closing the menu makes no lookup | |
 | O6 | Music playing (any song, library or catalog) | First time: macOS asks to let eddy control Music; then the link is copied | |
 | O8 | Service TIDAL, TIDAL connected. Play *Yeah!*, menu → **Copy Link for Current Song → TIDAL** (⇧⌘C) | "Copied TIDAL link"; the link (`tidal.com/browse/track/…`) opens *Yeah!* | |
 | O9 | Same, **Copy Link for Current Song → Apple Music** | "Copied Apple Music link"; the link (`music.apple.com/…?i=…`) opens *Yeah!* | |

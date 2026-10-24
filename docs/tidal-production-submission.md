@@ -29,7 +29,7 @@ eddy is a free, open-source macOS menu bar app. When someone clicks a Spotify li
 
 ISRCs and UPCs come from Deezer's public API, matched by the Spotify title, artist and duration.
 
-**Volume:** only on a user action: clicking a Spotify link, or copying a link to the song they're playing (also looked up when they open eddy's menu, so the link is ready; exact matches are then cached). An uncached track takes about 2–7 requests, an album 1. There is no background polling, crawling or bulk retrieval.
+**Volume:** only on a user action: clicking a Spotify link, or copying a link to the song they're playing (also looked up when they open the Copy Link submenu, so the link is ready; exact matches are then cached, and songs without one aren't looked up again for 10 minutes). An uncached track takes about 2–7 requests, an album 1. There is no background polling, crawling or bulk retrieval.
 
 **What eddy does with the results:** it opens `tidal://track/<id>`, `tidal://album/<id>` or `tidal://artist/<id>` in the TIDAL desktop app (or `tidal.com/browse/…` if the app isn't installed). Without a match, it opens TIDAL's search. eddy shows no TIDAL content itself and plays nothing: **all playback happens in TIDAL's own app.**
 
@@ -46,7 +46,7 @@ We took the logo from the Design Guidelines page. **Is there an official logo pa
 Two optional features read from or press buttons in the TIDAL desktop app through macOS Accessibility. We want to be upfront about them and will turn them off for TIDAL if you'd rather we didn't offer them:
 
 1. **Autoplay** (off by default). TIDAL deep links open a track's page but can't start playback, so after opening the link eddy presses that page's Play button in the TIDAL app, once, for the track the user clicked. It needs the user to grant the Accessibility permission.
-2. **Copy Link for Current Song** (menu command). Reads the title and artist of the song playing in the TIDAL app (when the user asks, or when they open eddy's menu so the link is ready) and copies a link to it, to share with a friend. The submenu lists **TIDAL first**, then Apple Music and Spotify for friends on other services; for TIDAL users the keyboard shortcut copies the TIDAL link (`tidal.com/browse/track/…`, found with the same catalog lookup as above).
+2. **Copy Link for Current Song** (menu command). Reads the title and artist of the song playing in the TIDAL app (when the user asks, or when they open the Copy Link submenu so the link is ready) and copies a link to it, to share with a friend. The submenu lists **TIDAL first**, then Apple Music and Spotify for friends on other services; for TIDAL users the keyboard shortcut copies the TIDAL link (`tidal.com/browse/track/…`, found with the same catalog lookup as above).
 
 ## Contact
 
