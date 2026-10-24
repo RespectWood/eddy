@@ -7,7 +7,11 @@
 **Click a Spotify link anywhere on your Mac, and it opens in Apple Music or TIDAL.**
 
 
-https://github.com/user-attachments/assets/2610bbc8-9c1a-4fb1-9bee-13d040a5c7ed
+
+
+https://github.com/user-attachments/assets/8459c138-5f37-4871-9260-f4773f569c3d
+
+
 
 
 A friend sends you a Spotify link in Messages, Slack or Mail. Instead of Spotify's web player, the same song opens in your own streaming app, ready to play. Every other link goes to your normal browser, untouched.
