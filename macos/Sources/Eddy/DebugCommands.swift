@@ -40,7 +40,10 @@ enum DebugCommands {
     /// Appends to debug/autoplay.log when debug commands are enabled.
     static func log(_ message: String) {
         guard isEnabled else { return }
-        let line = "\(ISO8601DateFormatter().string(from: Date())) \(message)\n"
+        // Messages hold song titles and URLs: line breaks are escaped, so one can't
+        // fake another log entry.
+        let flat = message.replacingOccurrences(of: "\r", with: "\\r").replacingOccurrences(of: "\n", with: "\\n")
+        let line = "\(ISO8601DateFormatter().string(from: Date())) \(flat)\n"
         let url = directory.appendingPathComponent("autoplay.log")
         if let handle = try? FileHandle(forWritingTo: url) {
             handle.seekToEndOfFile()

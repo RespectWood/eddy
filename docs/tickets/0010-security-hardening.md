@@ -112,6 +112,16 @@ Also: `https_only` on every request (all APIs are HTTPS).
 ### 10. Build hygiene
 - [x] Set the version, build and client ID with `plutil -replace` instead of `sed`.
 
+### 11. Follow-up from the re-audit (2026-10-24)
+- [x] `build-app.sh`: the hardened-runtime check also accepts ad-hoc signatures (`flags=0x10002(adhoc,runtime)`); the old check broke the CI app job.
+- [x] Only accept the URL schemes Eddy is registered for (`http`, `https`, `spotify`, `eddy`). Any app can send others with `open -a Eddy <url>`, and Eddy would pass them on to the browser with its own rights.
+- [x] Only accept HTML/XHTML files (the registered document types); apps, scripts and other files are refused instead of being handed to the browser.
+- [x] Check the scheme of every URL before opening it: `music:`/`tidal:` for the app, `https` for the web player, `http`/`https`/`spotify` for "Open Original Link" (the cache and Recents are read back from disk).
+- [x] Debug log: line breaks in messages are escaped, so a song title can't fake log entries.
+- [x] Network error notifications no longer include the request URL (it holds the song search); details only go to the private log.
+- [x] Dependabot: no semver-major updates for Rust crates (they need code changes, e.g. ureq 3).
+- [x] CLI `--explain`: control characters in titles and names from APIs are replaced, so they can't send escape sequences to the terminal.
+
 ## Out of scope
 
 - Developer ID signing + notarization (PLAN.md Phase 3). Item 1 is the part that doesn't need it.

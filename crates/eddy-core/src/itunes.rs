@@ -3,6 +3,7 @@
 use serde::Deserialize;
 
 use crate::error::ResolveError;
+use crate::explain::printable;
 use crate::http::{json, Http};
 use crate::link::SpotifyKind;
 use crate::matching::{best, is_various_artists, score, search_query, Candidate};
@@ -83,9 +84,9 @@ fn explain_items(
         let score = score(meta, &c).map_or_else(|| "    -".to_string(), |s| format!("{s:>5}"));
         eprintln!(
             "  {score}  {} — {} [{}]{}",
-            c.title,
-            c.artist,
-            item.collection_name.as_deref().unwrap_or_default(),
+            printable(c.title),
+            printable(c.artist),
+            printable(item.collection_name.as_deref().unwrap_or_default()),
             if c.compilation { " (compilation)" } else { "" }
         );
     }

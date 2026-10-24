@@ -1,4 +1,5 @@
 import SwiftUI
+import UniformTypeIdentifiers
 
 @main
 struct EddyApp: App {
@@ -38,15 +39,31 @@ final class AppDelegate: NSObject, NSApplicationDelegate {
         }
     }
 
+    /// The schemes Eddy is registered for (Info.plist). Any app can still send it other
+    /// URLs (`open -a Eddy <url>`); those are dropped, so Eddy doesn't pass on, with its
+    /// own rights, what the sender couldn't open itself.
+    private static let acceptedSchemes: Set<String> = ["http", "https", "spotify", "eddy"]
+
+    /// The document types Eddy is registered for (Info.plist), as a browser.
+    private static let acceptedFileTypes: [UTType] = [.html, UTType("public.xhtml")].compactMap { $0 }
+
     @objc private func handleGetURL(_ event: NSAppleEventDescriptor, withReplyEvent reply: NSAppleEventDescriptor) {
         guard let string = event.paramDescriptor(forKeyword: keyDirectObject)?.stringValue,
-              let url = URL(string: string) else { return }
+              let url = URL(string: string),
+              let scheme = url.scheme?.lowercased(), Self.acceptedSchemes.contains(scheme) else { return }
         model.handle(url)
     }
 
     /// Local HTML files (Eddy is registered as a browser) go straight to the real browser.
+    /// Other files (apps, scripts, …) are refused rather than handed to the browser.
     func application(_ sender: NSApplication, openFile filename: String) -> Bool {
-        model.handle(URL(fileURLWithPath: filename))
+        let url = URL(fileURLWithPath: filename)
+        guard let type = try? url.resourceValues(forKeys: [.contentTypeKey]).contentType,
+              Self.acceptedFileTypes.contains(where: type.conforms(to:)) else {
+            log.error("refused to open a file that isn't HTML")
+            return false
+        }
+        model.handle(url)
         return true
     }
 

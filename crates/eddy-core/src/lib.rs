@@ -11,6 +11,7 @@ mod cache;
 mod deezer;
 mod error;
 mod expand;
+mod explain;
 mod http;
 mod itunes;
 pub mod link;

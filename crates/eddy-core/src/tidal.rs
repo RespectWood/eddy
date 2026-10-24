@@ -17,6 +17,7 @@ use serde::Deserialize;
 use serde_json::Value;
 
 use crate::error::ResolveError;
+use crate::explain::printable;
 use crate::http::{json, map_err, Http};
 use crate::matching::{best_release, is_match, release_score, search_query, Candidate, Release};
 use crate::spotify::SpotifyMeta;
@@ -373,15 +374,18 @@ impl Tidal {
             })
             .collect();
         if explain {
-            eprintln!("Tidal album candidates (album hint: {album_hint:?}):");
+            eprintln!(
+                "Tidal album candidates (album hint: {:?}):",
+                printable(album_hint)
+            );
             for a in &albums {
                 let r = a.release();
                 eprintln!(
                     "  {:>6.1}  album {:<10} {} — {} (pop {:.2}, {:?})",
                     release_score(meta, album_hint, &r),
-                    a.album.id,
-                    r.album_title,
-                    r.album_artists.join(", "),
+                    printable(&a.album.id),
+                    printable(r.album_title),
+                    printable(&r.album_artists.join(", ")),
                     r.popularity,
                     r.release_year
                 );
@@ -601,7 +605,10 @@ fn primary_artist_id(meta: &SpotifyMeta, ids: &[String], included: &Included) ->
 }
 
 fn explain_candidates(meta: &SpotifyMeta, album_hint: &str, candidates: &[TrackCandidate]) {
-    eprintln!("Tidal candidates (album hint: {album_hint:?}):");
+    eprintln!(
+        "Tidal candidates (album hint: {:?}):",
+        printable(album_hint)
+    );
     let mut scored: Vec<(f64, &TrackCandidate)> = candidates
         .iter()
         .map(|c| (c.score(meta, album_hint), c))
@@ -611,9 +618,9 @@ fn explain_candidates(meta: &SpotifyMeta, album_hint: &str, candidates: &[TrackC
         let r = c.release();
         eprintln!(
             "  {score:>6.1}  track {:<10} {} — {} (pop {:.2}, {:?}){}",
-            c.track.id,
-            r.album_title,
-            r.album_artists.join(", "),
+            printable(&c.track.id),
+            printable(r.album_title),
+            printable(&r.album_artists.join(", ")),
             r.popularity,
             r.release_year,
             if c.isrc_match { " [ISRC]" } else { "" }

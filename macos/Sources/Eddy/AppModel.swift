@@ -251,7 +251,8 @@ final class AppModel: ObservableObject {
             // Network errors include the request URL, i.e. the song.
             log.error("network error: \(message, privacy: .private)")
             Browsers.forward(original, to: browserBundleID)
-            Notifier.post(title: "Couldn't convert the link", body: "Opened the original link instead. (\(message))")
+            // Only the private log gets the details: notifications are kept and shown on screen.
+            Notifier.post(title: "Couldn't convert the link", body: "Couldn't reach the music service, so the original link opened instead.")
         }
     }
 
@@ -346,7 +347,9 @@ final class AppModel: ObservableObject {
     }
 
     func openOriginal(_ item: RecentConversion) {
-        guard let url = URL(string: item.originalURL) else { return }
+        // Read back from disk, so only the link kinds Eddy converts are opened.
+        guard let url = URL(string: item.originalURL),
+              ["http", "https", "spotify"].contains(url.scheme?.lowercased() ?? "") else { return }
         passThrough(url)
     }
 

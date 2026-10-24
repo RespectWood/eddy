@@ -20,6 +20,7 @@
   - Clicked links are no longer written to the system log in readable form.
   - IDs and ISRCs from API responses are checked before they go into URLs.
   - CI: read-only token, actions pinned to commits, `cargo audit`, Dependabot.
+  - Eddy only accepts the link types and HTML files it's registered for, and checks every link's scheme before opening it.
 
 ## 0.1.0-alpha (unreleased)
 

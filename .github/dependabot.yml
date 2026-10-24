@@ -1,9 +1,14 @@
 version: 2
 updates:
+  # Minor and patch updates only: a major version (e.g. ureq 3) changes APIs the
+  # security fixes rely on, so those upgrades are done on purpose, not merged from a PR.
   - package-ecosystem: cargo
     directory: /
     schedule:
       interval: weekly
+    ignore:
+      - dependency-name: "*"
+        update-types: ["version-update:semver-major"]
   - package-ecosystem: github-actions
     directory: /
     schedule:

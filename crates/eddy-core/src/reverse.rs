@@ -9,6 +9,7 @@
 use serde::{Deserialize, Serialize};
 use url::Url;
 
+use crate::explain::printable;
 use crate::link::{SpotifyKind, SpotifyLink};
 use crate::matching::{normalize, score, Candidate, THRESHOLD};
 use crate::resolve::Resolver;
@@ -76,7 +77,7 @@ impl Resolver {
             Ok(found) => found,
             Err(e) => {
                 if self.explain {
-                    eprintln!("exact lookup failed: {e}");
+                    eprintln!("exact lookup failed: {}", printable(&e.to_string()));
                 }
                 None
             }
@@ -152,7 +153,13 @@ impl Resolver {
                 },
             );
             if self.explain {
-                eprintln!("  {:?}  {}: {} — {}", s, link.id, found.title, artists);
+                eprintln!(
+                    "  {:?}  {}: {} — {}",
+                    s,
+                    link.id,
+                    printable(&found.title),
+                    printable(&artists)
+                );
             }
             if let Some(s) = s.filter(|s| *s >= THRESHOLD) {
                 if best.as_ref().is_none_or(|(b, _)| s > *b) {

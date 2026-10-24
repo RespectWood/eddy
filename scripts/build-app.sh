@@ -70,8 +70,10 @@ else
 fi
 codesign --verify --strict "$APP"
 # Fail the build rather than ship without the hardened runtime.
+# The flags read e.g. `flags=0x10000(runtime)` or, ad-hoc, `flags=0x10002(adhoc,runtime)`.
 signature="$(codesign -dv "$APP" 2>&1)"
-[[ "$signature" == *"(runtime)"* ]] || { echo "hardened runtime missing" >&2; exit 1; }
+runtime_flag='flags=0x[0-9a-f]+\(([a-z-]+,)*runtime[,)]'
+[[ "$signature" =~ $runtime_flag ]] || { echo "hardened runtime missing" >&2; exit 1; }
 
 ZIP="$DIST/eddy-$VERSION-macos.zip"
 rm -f "$ZIP"
