@@ -10,7 +10,7 @@ use std::time::{Duration, Instant};
 use serde::Deserialize;
 
 use crate::error::ResolveError;
-use crate::http::{map_err, Http};
+use crate::http::{status_error, Http, Request};
 use crate::link::{parse, ParsedLink, SpotifyKind};
 
 const API: &str = "https://musicbrainz.org/ws/2";
@@ -55,24 +55,21 @@ pub(crate) fn spotify_track_ids(http: &Http, isrc: &str) -> Result<Vec<String>, 
     }
     let url = format!("{API}/isrc/{}", isrc.to_ascii_uppercase());
     let mut retried = false;
+    let request = Request::get(&url)
+        .header("User-Agent", USER_AGENT)
+        .query("inc", "url-rels")
+        .query("fmt", "json");
     let body = loop {
-        throttle();
-        let result = http
-            .get(&url)
-            .set("User-Agent", USER_AGENT)
-            .query("inc", "url-rels")
-            .query("fmt", "json")
-            .call();
-        match result {
-            Ok(response) => {
-                break response
-                    .into_string()
-                    .map_err(|e| ResolveError::Network(format!("MusicBrainz: {e}")))?
-            }
-            Err(ureq::Error::Status(404, _)) => return Ok(Vec::new()),
+        if http.is_live() {
+            throttle();
+        }
+        let response = http.send(&request, "MusicBrainz")?;
+        match response.status {
+            404 => return Ok(Vec::new()),
             // "The web server is currently busy": common at peak times, retry once.
-            Err(ureq::Error::Status(503, _)) if !retried => retried = true,
-            Err(e) => return Err(map_err("MusicBrainz", e)),
+            503 if !retried => retried = true,
+            400.. => return Err(status_error("MusicBrainz", response.status)),
+            _ => break response.body,
         }
     };
     Ok(parse_track_ids(&body))
@@ -152,7 +149,8 @@ mod tests {
     #[test]
     #[ignore]
     fn live_finds_spotify_links_for_usher() {
-        let ids = spotify_track_ids(&Http::new(), "USAR10301423").unwrap();
+        let ids =
+            spotify_track_ids(&crate::replay::live("musicbrainz_usher"), "USAR10301423").unwrap();
         assert!(
             ids.contains(&"1M18Qdzl9xFVRmUm66zn34".to_string()),
             "{ids:?}"

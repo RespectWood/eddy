@@ -15,7 +15,7 @@ use sha2::{Digest, Sha256};
 use url::Url;
 
 use crate::error::ResolveError;
-use crate::http::Http;
+use crate::http::{Http, Request};
 
 const AUTHORIZE_URL: &str = "https://login.tidal.com/authorize";
 const TOKEN_URL: &str = "https://auth.tidal.com/v1/oauth2/token";
@@ -168,10 +168,17 @@ fn describe_oauth_error(code: &str) -> &'static str {
 
 /// Completes a login: exchanges the code for tokens and reads the profile.
 pub fn finish_login(request: &LoginRequest, callback_url: &str) -> Result<TidalTokens, AuthError> {
+    finish_login_with(&Http::new(), request, callback_url)
+}
+
+pub(crate) fn finish_login_with(
+    http: &Http,
+    request: &LoginRequest,
+    callback_url: &str,
+) -> Result<TidalTokens, AuthError> {
     let code = code_from_callback(request, callback_url)?;
-    let http = Http::new();
     let response = token_request(
-        &http,
+        http,
         &[
             ("grant_type", "authorization_code"),
             ("code", &code),
@@ -183,7 +190,7 @@ pub fn finish_login(request: &LoginRequest, callback_url: &str) -> Result<TidalT
     let mut tokens = response.into_tokens(None);
     // The country is a nicety (the Mac's region is the fallback); a failure doesn't
     // fail the login.
-    if let Ok(country) = profile_country(&http, &tokens.access_token) {
+    if let Ok(country) = profile_country(http, &tokens.access_token) {
         tokens.country = country;
     }
     Ok(tokens)
@@ -242,30 +249,33 @@ impl TokenResponse {
 }
 
 fn token_request(http: &Http, form: &[(&str, &str)]) -> Result<TokenResponse, AuthError> {
-    match http.post(TOKEN_URL).send_form(form) {
-        Ok(response) => response
-            .into_json()
+    let response = http
+        .send(&Request::post_form(TOKEN_URL, form), "TIDAL login")
+        .map_err(|e| AuthError::Network(e.to_string()))?;
+    match response.status {
+        400..=499 => Err(AuthError::Denied(format!(
+            "HTTP {}: {}",
+            response.status,
+            response.body.chars().take(200).collect::<String>()
+        ))),
+        500.. => Err(AuthError::Network(format!(
+            "TIDAL login returned HTTP {}",
+            response.status
+        ))),
+        _ => serde_json::from_str(&response.body)
             .map_err(|e| AuthError::Network(format!("TIDAL login: invalid response: {e}"))),
-        Err(ureq::Error::Status(code, response)) if (400..500).contains(&code) => {
-            let body = response.into_string().unwrap_or_default();
-            Err(AuthError::Denied(format!(
-                "HTTP {code}: {}",
-                body.chars().take(200).collect::<String>()
-            )))
-        }
-        Err(e) => Err(AuthError::Network(format!("TIDAL login: {e}"))),
     }
 }
 
 /// The account's country from `/v2/users/me`.
 fn profile_country(http: &Http, access_token: &str) -> Result<Option<String>, AuthError> {
     let doc: serde_json::Value = http
-        .get(PROFILE_URL)
-        .set("Authorization", &format!("Bearer {access_token}"))
-        .set("Accept", "application/vnd.api+json")
-        .call()
-        .map_err(|e| AuthError::Network(e.to_string()))?
-        .into_json()
+        .json(
+            &Request::get(PROFILE_URL)
+                .header("Authorization", &format!("Bearer {access_token}"))
+                .header("Accept", "application/vnd.api+json"),
+            "TIDAL profile",
+        )
         .map_err(|e| AuthError::Network(e.to_string()))?;
     Ok(doc["data"]["attributes"]["country"]
         .as_str()

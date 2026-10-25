@@ -15,5 +15,9 @@ path = "src/main.rs"
 eddy-core.workspace = true
 serde_json.workspace = true
 
+[dev-dependencies]
+# Lets the tests run `eddy resolve` against recorded responses (`EDDY_REPLAY`).
+eddy-core = { workspace = true, features = ["test-support"] }
+
 [lints]
 workspace = true

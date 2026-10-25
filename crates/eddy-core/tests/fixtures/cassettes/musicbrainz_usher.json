@@ -1,0 +1,123 @@
+{
+  "note": "Recorded 2026-10-25 with `EDDY_RECORD=1 cargo test -- --ignored`.",
+  "exchanges": [
+    {
+      "request": "GET https://musicbrainz.org/ws/2/isrc/USAR10301423?fmt=json&inc=url-rels",
+      "status": 200,
+      "json": {
+        "isrc": "USAR10301423",
+        "recordings": [
+          {
+            "disambiguation": "",
+            "first-release-date": "2025-01-17",
+            "id": "cbb7278f-17e3-4aab-8303-7002fe1b7f93",
+            "length": 250182,
+            "relations": [],
+            "title": "Yeah!",
+            "video": false
+          },
+          {
+            "disambiguation": "",
+            "first-release-date": "2004-02-01",
+            "id": "4f595ab5-18bb-4007-b17d-066a0e704234",
+            "length": 250373,
+            "relations": [
+              {
+                "attribute-ids": {},
+                "attribute-values": {},
+                "attributes": [],
+                "begin": null,
+                "direction": "forward",
+                "end": null,
+                "ended": false,
+                "source-credit": "",
+                "target-credit": "",
+                "target-type": "url",
+                "type": "free streaming",
+                "type-id": "7e41ef12-a124-4324-afdb-fdbae687a89c",
+                "url": {
+                  "id": "e02eccc9-fa72-4e25-9d39-5daceee98ec2",
+                  "resource": "https://open.spotify.com/track/1M18Qdzl9xFVRmUm66zn34"
+                }
+              },
+              {
+                "attribute-ids": {},
+                "attribute-values": {},
+                "attributes": [],
+                "begin": null,
+                "direction": "forward",
+                "end": null,
+                "ended": false,
+                "source-credit": "",
+                "target-credit": "",
+                "target-type": "url",
+                "type": "free streaming",
+                "type-id": "7e41ef12-a124-4324-afdb-fdbae687a89c",
+                "url": {
+                  "id": "5945de4f-ca96-49ef-9cb0-fbc601cb9b21",
+                  "resource": "https://open.spotify.com/track/5rb9QrpfcKFHM1EUbSIurX"
+                }
+              },
+              {
+                "attribute-ids": {},
+                "attribute-values": {},
+                "attributes": [],
+                "begin": null,
+                "direction": "forward",
+                "end": null,
+                "ended": false,
+                "source-credit": "",
+                "target-credit": "",
+                "target-type": "url",
+                "type": "free streaming",
+                "type-id": "7e41ef12-a124-4324-afdb-fdbae687a89c",
+                "url": {
+                  "id": "a22e389a-48fd-43f3-9fb4-09fcd8812bed",
+                  "resource": "https://www.deezer.com/track/2717935882"
+                }
+              },
+              {
+                "attribute-ids": {},
+                "attribute-values": {},
+                "attributes": [],
+                "begin": null,
+                "direction": "forward",
+                "end": null,
+                "ended": false,
+                "source-credit": "",
+                "target-credit": "",
+                "target-type": "url",
+                "type": "other databases",
+                "type-id": "bc21877b-e993-42ed-a7ce-9187ec9b638f",
+                "url": {
+                  "id": "3b6cb625-dd03-44a6-be08-73dc471a4e88",
+                  "resource": "https://www.offiziellecharts.de/charts/titel-details-6042"
+                }
+              },
+              {
+                "attribute-ids": {},
+                "attribute-values": {},
+                "attributes": [],
+                "begin": null,
+                "direction": "forward",
+                "end": null,
+                "ended": false,
+                "source-credit": "",
+                "target-credit": "",
+                "target-type": "url",
+                "type": "streaming",
+                "type-id": "b5f3058a-666c-406f-aafb-f9249fc7b122",
+                "url": {
+                  "id": "db04e5c6-5ff2-4819-8362-bb581807ff12",
+                  "resource": "https://tidal.com/track/353004569"
+                }
+              }
+            ],
+            "title": "Yeah!",
+            "video": false
+          }
+        ]
+      }
+    }
+  ]
+}

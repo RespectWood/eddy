@@ -304,6 +304,7 @@ fn cache_key(meta: &SpotifyMeta, to: ShareTarget, country: &str) -> String {
 #[cfg(test)]
 mod tests {
     use super::*;
+    use crate::replay::live;
     use crate::ResolverConfig;
 
     fn usher() -> NowPlaying {
@@ -396,7 +397,7 @@ mod tests {
     #[test]
     #[ignore]
     fn live_usher_gets_an_exact_link() {
-        let resolver = Resolver::new(ResolverConfig::default());
+        let resolver = Resolver::with_http(ResolverConfig::default(), live("share_usher_spotify"));
         let share = resolver.share_link(&usher(), ShareTarget::Spotify, "DE");
         assert!(share.exact, "{share:?}");
         assert!(
@@ -410,7 +411,8 @@ mod tests {
     #[test]
     #[ignore]
     fn live_usher_gets_an_apple_music_link() {
-        let resolver = Resolver::new(ResolverConfig::default());
+        let resolver =
+            Resolver::with_http(ResolverConfig::default(), live("share_usher_apple_music"));
         let share = resolver.share_link(&usher(), ShareTarget::AppleMusic, "DE");
         assert!(share.exact, "{share:?}");
         assert!(

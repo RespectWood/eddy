@@ -19,5 +19,13 @@ getrandom.workspace = true
 ureq.workspace = true
 rusqlite.workspace = true
 
+[dev-dependencies]
+proptest.workspace = true
+
+[features]
+# Lets test builds answer requests from recorded responses (`EDDY_REPLAY`, see
+# `src/replay.rs`). Enabled by the CLI's tests only; release builds refuse it.
+test-support = []
+
 [lints]
 workspace = true

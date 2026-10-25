@@ -22,6 +22,7 @@ getrandom = "0.2"
 ureq = { version = "2.12", features = ["json"] }
 rusqlite = { version = "0.32", features = ["bundled"] }
 uniffi = "0.28"
+proptest = { version = "1", default-features = false, features = ["std"] }
 
 [workspace.lints.rust]
 unsafe_op_in_unsafe_fn = "warn"

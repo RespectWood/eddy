@@ -6,7 +6,7 @@
 use serde::Deserialize;
 
 use crate::error::ResolveError;
-use crate::http::{json, Http};
+use crate::http::{Http, Request};
 use crate::link::SpotifyKind;
 use crate::matching::{best, normalize, score, Candidate, THRESHOLD};
 use crate::spotify::SpotifyMeta;
@@ -74,8 +74,8 @@ pub(crate) fn find_code(
     };
     // Plain text search: Deezer's advanced syntax (`artist:"…" track:"…"`) returns nothing.
     let query = format!("{} {}", meta.primary_artist(), normalize(&meta.title));
-    let response: SearchResponse = json(
-        http.get(&format!("{API}/search/{path}")).query("q", &query),
+    let response: SearchResponse = http.json(
+        &Request::get(&format!("{API}/search/{path}")).query("q", &query),
         "Deezer",
     )?;
     let Some(item) = best(meta, response.data, |i| Candidate {
@@ -99,7 +99,10 @@ pub(crate) fn find_code(
     let code = match item.isrc {
         Some(isrc) => Some(isrc),
         None => {
-            let codes: Codes = json(http.get(&format!("{API}/{path}/{}", item.id)), "Deezer")?;
+            let codes: Codes = http.json(
+                &Request::get(&format!("{API}/{path}/{}", item.id)),
+                "Deezer",
+            )?;
             match meta.kind {
                 SpotifyKind::Album => codes.upc,
                 _ => codes.isrc,
@@ -117,8 +120,8 @@ pub(crate) fn find_isrcs(
     max: usize,
 ) -> Result<Vec<String>, ResolveError> {
     let query = format!("{} {}", meta.primary_artist(), normalize(&meta.title));
-    let response: SearchResponse = json(
-        http.get(&format!("{API}/search/track")).query("q", &query),
+    let response: SearchResponse = http.json(
+        &Request::get(&format!("{API}/search/track")).query("q", &query),
         "Deezer",
     )?;
     let mut scored: Vec<(i32, String)> = response
@@ -169,7 +172,9 @@ mod tests {
         };
         // Deezer's results don't always include the original release, so any Rick Astley
         // (label prefix GBARL) recording of the song counts.
-        let found = find_code(&Http::new(), &meta).unwrap().unwrap();
+        let found = find_code(&crate::replay::live("deezer_isrc"), &meta)
+            .unwrap()
+            .unwrap();
         assert!(found.code.starts_with("GBARL"), "{}", found.code);
         assert!(!found.album_title.is_empty());
     }

@@ -115,27 +115,13 @@ final class AppModel: ObservableObject {
     // MARK: - Routing
 
     func handle(_ url: URL) {
-        if url.scheme?.lowercased() == "eddy" {
-            // Login redirect from the browser (`eddy://auth/tidal?code=…`).
-            if url.host == "auth" {
-                if url.path == "/tidal" { tidalAccount.handleRedirect(url) }
-                return
-            }
-            DebugCommands.handle(url)
-            return
-        }
-        if url.isFileURL || isDisabled || service == nil {
-            passThrough(url)
-            return
-        }
-        // Fast path: sync Rust parse, no network. Ordinary links leave immediately.
-        switch parseLink(url: url.absoluteString) {
-        case .notMusic:
-            Browsers.forward(url, to: browserBundleID)
-        case let .spotify(_, _, canonicalUrl, convertible):
-            if convertible { convert(url) } else { passThrough(url, canonical: canonicalUrl) }
-        case .spotifyShortLink:
-            convert(url)
+        switch Route.decide(url, isDisabled: isDisabled, hasService: service != nil) {
+        case .tidalLogin: tidalAccount.handleRedirect(url)
+        case .ignore: break
+        case .debug: DebugCommands.handle(url)
+        case .forward: Browsers.forward(url, to: browserBundleID)
+        case let .passThrough(canonical): passThrough(url, canonical: canonical)
+        case .convert: convert(url)
         }
     }
 
@@ -180,7 +166,7 @@ final class AppModel: ObservableObject {
     private func finish(_ original: URL, service: Service, result: Result<Conversion, Error>, click: Int) {
         switch result {
         case let .success(conversion):
-            let (nativeURL, webURL) = landingURLs(for: conversion, service: service)
+            let (nativeURL, webURL) = Self.landingURLs(for: conversion, service: service, page: tidalLandingPage)
             let opened = TargetApps.open(nativeURL: nativeURL, webURL: webURL, service: service, browser: browserBundleID)
             remember(RecentConversion(conversion, service: service, original: original, nativeURL: nativeURL, webURL: webURL))
             // Lookups finish in any order (cache hits are instant), so only the most
@@ -212,8 +198,8 @@ final class AppModel: ObservableObject {
 
     /// The page a conversion opens on: the item itself, or for Tidal tracks optionally
     /// the artist's page.
-    private func landingURLs(for conversion: Conversion, service: Service) -> (String, String) {
-        if service == .tidal, tidalLandingPage == .artist, conversion.kind == .track,
+    nonisolated static func landingURLs(for conversion: Conversion, service: Service, page: TidalLandingPage) -> (String, String) {
+        if service == .tidal, page == .artist, conversion.kind == .track,
            let nativeURL = conversion.artistNativeUrl, let webURL = conversion.artistWebUrl {
             return (nativeURL, webURL)
         }

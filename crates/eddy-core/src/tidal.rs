@@ -18,7 +18,7 @@ use serde_json::Value;
 
 use crate::error::ResolveError;
 use crate::explain::printable;
-use crate::http::{json, map_err, Http};
+use crate::http::{Http, Request};
 use crate::matching::{best_release, is_match, release_score, search_query, Candidate, Release};
 use crate::spotify::SpotifyMeta;
 use crate::tidal_auth::{self, TidalAuth, TidalTokens, TokenStore};
@@ -278,9 +278,8 @@ impl Tidal {
         for page in 0..MAX_PAGES {
             let request = match &next {
                 // `next` is relative to the API root and carries every query parameter.
-                Some(path) => http.get(&format!("{API}{path}")),
-                None if page == 0 => http
-                    .get(&format!("{API}/tracks"))
+                Some(path) => Request::get(&format!("{API}{path}")),
+                None if page == 0 => Request::get(&format!("{API}/tracks"))
                     .query("countryCode", country)
                     .query("filter[isrc]", isrc)
                     // Repeated, not comma-separated: an encoded comma is rejected.
@@ -310,7 +309,7 @@ impl Tidal {
     ) -> Result<(), ResolveError> {
         let doc = self.fetch(
             http,
-            http.get(&format!("{API}/searchResults"))
+            Request::get(&format!("{API}/searchResults"))
                 .query("filter[query]", &search_query(meta))
                 .query("countryCode", country)
                 .query("include", "tracks")
@@ -354,7 +353,7 @@ impl Tidal {
     ) -> Result<Option<TidalItem>, ResolveError> {
         let doc = self.fetch(
             http,
-            http.get(&format!("{API}/albums"))
+            Request::get(&format!("{API}/albums"))
                 .query("countryCode", country)
                 .query("filter[barcodeId]", upc)
                 .query("include", "artists"),
@@ -413,8 +412,7 @@ impl Tidal {
         unique.dedup();
         let mut result = HashMap::new();
         for chunk in unique.chunks(IDS_PER_REQUEST) {
-            let mut request = http
-                .get(&format!("{API}/albums"))
+            let mut request = Request::get(&format!("{API}/albums"))
                 .query("countryCode", country)
                 .query("include", "artists");
             for id in chunk {
@@ -431,12 +429,12 @@ impl Tidal {
         Ok(result)
     }
 
-    fn fetch(&self, http: &Http, request: ureq::Request) -> Result<Document, ResolveError> {
+    fn fetch(&self, http: &Http, request: Request) -> Result<Document, ResolveError> {
         let token = self.token(http)?;
-        let result = json(
-            request
-                .set("Authorization", &format!("Bearer {token}"))
-                .set("Accept", "application/vnd.api+json"),
+        let result = http.json(
+            &request
+                .header("Authorization", &format!("Bearer {token}"))
+                .header("Accept", "application/vnd.api+json"),
             "TIDAL",
         );
         if result.is_err() {
@@ -511,13 +509,11 @@ impl Tidal {
             "{}:{}",
             credentials.client_id, credentials.client_secret
         ));
-        let response: TokenResponse = http
-            .post(TOKEN_URL)
-            .set("Authorization", &format!("Basic {basic}"))
-            .send_form(&[("grant_type", "client_credentials")])
-            .map_err(|e| map_err("TIDAL login", e))?
-            .into_json()
-            .map_err(|e| ResolveError::Network(format!("TIDAL login: invalid response: {e}")))?;
+        let response: TokenResponse = http.json(
+            &Request::post_form(TOKEN_URL, &[("grant_type", "client_credentials")])
+                .header("Authorization", &format!("Basic {basic}")),
+            "TIDAL login",
+        )?;
         // Refresh a minute early so a token never expires mid-request.
         let lifetime = Duration::from_secs(response.expires_in.saturating_sub(60));
         *cached = Some((response.access_token.clone(), Instant::now() + lifetime));

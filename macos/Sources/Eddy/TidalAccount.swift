@@ -28,16 +28,27 @@ final class TidalAccount: ObservableObject {
     var onChange: (() -> Void)?
 
     /// Public by design (PKCE): it's not a secret.
-    let clientID: String? = {
+    let clientID: String?
+    nonisolated static let bundleClientID: String? = {
         let id = Bundle.main.object(forInfoDictionaryKey: "EddyTidalClientID") as? String
         return id.flatMap { $0.isEmpty || $0.hasPrefix("__") ? nil : $0 }
     }()
 
-    let store = KeychainTidalTokenStore()
+    let store: KeychainTidalTokenStore
+    /// Opens the login page in a browser (bundle ID).
+    private let openLoginPage: (URL, String?) -> Void
     /// The login in progress; only its redirect is accepted (the core checks `state`).
-    private var pending: TidalLoginRequest?
+    private(set) var pending: TidalLoginRequest?
 
-    init() {
+    /// The parameters are for tests; the app uses the defaults.
+    init(
+        clientID: String? = TidalAccount.bundleClientID,
+        store: KeychainTidalTokenStore = KeychainTidalTokenStore(),
+        openLoginPage: @escaping (URL, String?) -> Void = Browsers.forward
+    ) {
+        self.clientID = clientID
+        self.store = store
+        self.openLoginPage = openLoginPage
         store.onClear = { [weak self] in
             Task { @MainActor in
                 DebugCommands.log("Tidal login no longer valid; needs reconnect")
@@ -79,7 +90,7 @@ final class TidalAccount: ObservableObject {
         pending = request
         status = .connecting
         DebugCommands.log("Tidal login: opening login page in \(browser ?? "default browser")")
-        Browsers.forward(url, to: browser)
+        openLoginPage(url, browser)
     }
 
     func cancelConnect() {
@@ -141,14 +152,19 @@ final class TidalAccount: ObservableObject {
 
 /// Tidal tokens in the login keychain. Called by the Rust core from background threads.
 final class KeychainTidalTokenStore: TidalTokenStore, @unchecked Sendable {
-    private static let service = "com.respectwood.eddy.tidal"
+    /// The Keychain item; tests use their own.
+    private let service: String
     private static let account = "tokens"
+
+    init(service: String = "com.respectwood.eddy.tidal") {
+        self.service = service
+    }
 
     /// Called when the core reports that the login is no longer valid.
     var onClear: (() -> Void)?
 
     func load() -> TidalTokens? {
-        guard let data = Keychain.read(service: Self.service, account: Self.account),
+        guard let data = Keychain.read(service: service, account: Self.account),
               let dict = try? JSONSerialization.jsonObject(with: data) as? [String: Any],
               let access = dict["accessToken"] as? String,
               let expiresAt = (dict["expiresAt"] as? NSNumber)?.uint64Value else { return nil }
@@ -165,7 +181,7 @@ final class KeychainTidalTokenStore: TidalTokenStore, @unchecked Sendable {
         dict["refreshToken"] = tokens.refreshToken
         dict["country"] = tokens.country
         guard let data = try? JSONSerialization.data(withJSONObject: dict) else { return }
-        Keychain.write(data, service: Self.service, account: Self.account)
+        Keychain.write(data, service: service, account: Self.account)
     }
 
     func clear() {
@@ -174,6 +190,6 @@ final class KeychainTidalTokenStore: TidalTokenStore, @unchecked Sendable {
     }
 
     func delete() {
-        Keychain.delete(service: Self.service, account: Self.account)
+        Keychain.delete(service: service, account: Self.account)
     }
 }

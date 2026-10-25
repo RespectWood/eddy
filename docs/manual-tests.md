@@ -6,15 +6,29 @@ Mark each line ✅ / ❌. For ❌, note what happened instead.
 
 ## Already verified automatically
 
-So you don't need to repeat these:
+These run on every push (`cargo test`, `scripts/test-app.sh`, `scripts/check-app.sh`; see ticket 0012), so this checklist only covers what needs eyes, system dialogs or real apps.
 
-- Link parser: every URL shape in ticket 0001 (unit tests + fixture corpus); `parse()` runs in µs.
-- Spotify → Apple Music lookups (live): tracks (incl. "– Remastered 2011" titles) and albums.
-- Spotify → TIDAL without credentials returns a TIDAL search link (live).
-- Deezer ISRC lookup (live).
-- `eddy.app` builds as a universal binary (arm64 + x86_64), signs ad-hoc, and launches as a background menu bar process.
+| Rows | Automated | What's still manual |
+|---|---|---|
+| C1–C5 | Routing: ordinary links, file URLs and lookalike hosts always go to the browser, never back to eddy (`RouteTests`, `BrowsersTests`) | That the browser really opens, without delay, from real apps |
+| D1–D4, E4–E9 | Lookups from link to result, offline with recorded responses: tracks, albums, localized and remastered links, original release over compilations, TIDAL with credentials, login and refresh (`offline_tests.rs`) | That the app shows the item |
+| D6 | The second lookup makes no network request (`cached_conversions_need_no_requests`) | That it feels instant |
+| E1–E3 | Without credentials: a TIDAL search link, no TIDAL request | That TIDAL shows the search, cold start included |
+| E10 | "Show Artist Page Instead of Song" picks the artist page (`LandingPageTests`) | That TIDAL shows it |
+| F1–F3 | Playlists, episodes and artists pass through unchanged (`otherSpotifyLinksOpenAsUsual`) | Nothing: marked automated below |
+| F4 | Short links: redirects, `http` → `https`, pages with the link in their HTML (`short_link_*`) | A **real** short link from the Spotify app |
+| F6 | No match → search link (`no_match_opens_a_search`) | The notification |
+| H1 | Disabled: no link is converted (`disabledOrNotSetUpChangesNothing`) | Icon and status text |
+| I4 | A network failure is reported as an error (`service_errors`) | The original link opens, plus the notification |
+| L (security) | A forged `eddy://auth/tidal` redirect doesn't end a login in progress (`TidalAccountTests`) | The real login, L1–L7 |
+| O2, O8–O10 | Share links: Spotify via MusicBrainz, Apple Music, TIDAL, search fallbacks, misses remembered for 10 minutes | Clipboard and notifications |
+| O11 | Submenu order TIDAL, Apple Music, Spotify (`shareTargetOrder`) | ⇧⌘C on the right row |
+| Release build | Universal, signed with the hardened runtime (also after unzipping), URL schemes declared, no test-only code (`scripts/check-app.sh`) | — |
+
+Also verified earlier, by hand:
+
+- `eddy.app` launches as a background menu bar process.
 - Sending a Spotify link to the running app: it resolves, caches the result, saves it to recents, and Music.app launches.
-- Sending an ordinary link to the app: no crash or loop. Whether Firefox actually showed the page is test C1 below.
 
 ## Before you start
 
@@ -118,9 +132,9 @@ Set Open Spotify Links In → TIDAL. Deep link formats were checked against TIDA
 
 | # | Do this | Expected | Result |
 |---|---|---|---|
-| F1 | Playlist link `https://open.spotify.com/playlist/37i9dQZF1DXcBWIGoYBM5M` | Opens unchanged in Firefox | |
-| F2 | Podcast episode link `https://open.spotify.com/episode/512ojhOuo1ktJprKbVcKyQ` | Opens unchanged in Firefox | |
-| F3 | Artist link `https://open.spotify.com/artist/0gxyHStUsqpMadRV0Di1Qt` | Opens unchanged in Firefox (artist conversion is a later ticket) | |
+| F1 | Playlist link `https://open.spotify.com/playlist/37i9dQZF1DXcBWIGoYBM5M` | Opens unchanged in Firefox | automated (`RouteTests`) |
+| F2 | Podcast episode link `https://open.spotify.com/episode/512ojhOuo1ktJprKbVcKyQ` | Opens unchanged in Firefox | automated (`RouteTests`) |
+| F3 | Artist link `https://open.spotify.com/artist/0gxyHStUsqpMadRV0Di1Qt` | Opens unchanged in Firefox (artist conversion is a later ticket) | automated (`RouteTests`) |
 | F4 | A **real** short link: in Spotify, Share → Copy link on a song (gives `spotify.link/…` or `open.spotify.com/…`), paste it in Messages to yourself, click it | Converts like a normal track link. **Short links are untested with real data**, so this one matters | |
 | F5 | `spotify:track:0VjIjW4GlUZAMYd2vXMi3b` typed in Safari's address bar or `open` in Terminal | The Spotify app still handles these (eddy doesn't take the `spotify:` scheme from an installed Spotify app). Expected: Spotify opens | |
 | F6 | A track that isn't on Apple Music (e.g. a Spotify-exclusive podcast song or a local indie upload) | Music opens a **search**, plus a notification "Not found on Apple Music" | |

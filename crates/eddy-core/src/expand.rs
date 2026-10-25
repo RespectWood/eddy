@@ -3,7 +3,7 @@
 use url::Url;
 
 use crate::error::ResolveError;
-use crate::http::{map_err, Http};
+use crate::http::{status_error, Http, Request};
 use crate::link::{parse, ParsedLink, SpotifyLink};
 
 const MAX_REDIRECTS: usize = 5;
@@ -19,18 +19,20 @@ pub(crate) fn expand(http: &Http, short_url: &str) -> Result<Option<SpotifyLink>
     let network = |message: String| ResolveError::Network(format!("Spotify short link: {message}"));
     let mut url = https(short_url).ok_or_else(|| network("not a web link".into()))?;
     for _ in 0..=MAX_REDIRECTS {
-        let response = http
-            .get_without_redirects(url.as_str())
-            .call()
-            .map_err(|e| map_err("Spotify short link", e))?;
-        if !(300..400).contains(&response.status()) {
-            let body = response.into_string().map_err(|e| network(e.to_string()))?;
-            return Ok(find_link_in_body(&body));
+        let response = http.send(
+            &Request::get(url.as_str()).without_redirects(),
+            "Spotify short link",
+        )?;
+        if response.status >= 400 {
+            return Err(status_error("Spotify short link", response.status));
+        }
+        if !(300..400).contains(&response.status) {
+            return Ok(find_link_in_body(&response.body));
         }
         let location = response
-            .header("Location")
+            .location
             .ok_or_else(|| network("redirect without a target".into()))?;
-        let next = url.join(location).map_err(|e| network(e.to_string()))?;
+        let next = url.join(&location).map_err(|e| network(e.to_string()))?;
         // The content link itself needn't be fetched: it's all we were after.
         if let ParsedLink::Spotify(link) = parse(next.as_str()) {
             return Ok(Some(link));

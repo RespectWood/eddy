@@ -3,7 +3,7 @@
 use serde_json::Value;
 
 use crate::error::ResolveError;
-use crate::http::{map_err, Http, BROWSER_USER_AGENT};
+use crate::http::{Http, Request, BROWSER_USER_AGENT};
 use crate::link::{SpotifyKind, SpotifyLink};
 
 #[derive(Debug, Clone, PartialEq)]
@@ -34,14 +34,11 @@ pub(crate) fn fetch(http: &Http, link: &SpotifyLink) -> Result<Option<SpotifyMet
         link.kind.as_str(),
         link.id
     );
-    let html = http
-        .get(&url)
-        .set("User-Agent", BROWSER_USER_AGENT)
-        .call()
-        .map_err(|e| map_err("Spotify", e))?
-        .into_string()
-        .map_err(|e| ResolveError::Network(format!("Spotify: {e}")))?;
-    Ok(parse_embed(&html, link.kind))
+    let response = http.fetch(
+        &Request::get(&url).header("User-Agent", BROWSER_USER_AGENT),
+        "Spotify",
+    )?;
+    Ok(parse_embed(&response.body, link.kind))
 }
 
 /// Extracts metadata from the `__NEXT_DATA__` JSON embedded in the page.

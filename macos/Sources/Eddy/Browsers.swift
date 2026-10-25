@@ -48,11 +48,18 @@ enum Browsers {
     /// `NSWorkspace.open(url)` would send the link straight back to eddy.
     static func forward(_ url: URL, to bundleID: String?) {
         let workspace = NSWorkspace.shared
-        let candidates = [bundleID, safari].compactMap { $0 }.filter { $0 != Bundle.main.bundleIdentifier }
+        let candidates = candidates(preferred: bundleID, own: Bundle.main.bundleIdentifier)
         guard let appURL = candidates.lazy.compactMap({ workspace.urlForApplication(withBundleIdentifier: $0) }).first else {
             log.error("no browser to forward \(url.absoluteString, privacy: .private) to")
             return
         }
         workspace.open([url], withApplicationAt: appURL, configuration: NSWorkspace.OpenConfiguration())
+    }
+
+    /// Browsers to try, in order: the chosen one, then Safari. Never eddy itself (`own`),
+    /// which would get the link straight back.
+    static func candidates(preferred: String?, own: String?) -> [String] {
+        var seen = Set<String>()
+        return [preferred, safari].compactMap { $0 }.filter { $0 != own && seen.insert($0).inserted }
     }
 }

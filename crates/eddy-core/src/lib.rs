@@ -8,6 +8,10 @@
 
 #![forbid(unsafe_code)]
 
+// Recorded responses are for tests; a release build must never answer from them.
+#[cfg(all(feature = "test-support", not(debug_assertions)))]
+compile_error!("the `test-support` feature is for test builds only");
+
 mod cache;
 mod deezer;
 mod error;
@@ -18,6 +22,10 @@ mod itunes;
 pub mod link;
 mod matching;
 mod musicbrainz;
+#[cfg(test)]
+mod offline_tests;
+#[cfg(any(test, feature = "test-support"))]
+mod replay;
 mod resolve;
 mod reverse;
 mod spotify;

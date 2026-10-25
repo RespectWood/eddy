@@ -4,7 +4,7 @@ use serde::Deserialize;
 
 use crate::error::ResolveError;
 use crate::explain::printable;
-use crate::http::{json, Http};
+use crate::http::{Http, Request};
 use crate::link::SpotifyKind;
 use crate::matching::{best, is_various_artists, score, search_query, Candidate};
 use crate::resolve::Found;
@@ -98,8 +98,8 @@ fn search(
     entity: &str,
     country: &str,
 ) -> Result<Vec<Item>, ResolveError> {
-    let response: SearchResponse = json(
-        http.get(SEARCH_URL)
+    let response: SearchResponse = http.json(
+        &Request::get(SEARCH_URL)
             .query("term", &search_query(meta))
             .query("entity", entity)
             .query("country", country)
@@ -153,5 +153,83 @@ fn is_explicit(explicitness: Option<&str>) -> Option<bool> {
         "explicit" => Some(true),
         "notExplicit" | "cleaned" => Some(false),
         _ => None,
+    }
+}
+
+#[cfg(test)]
+mod tests {
+    use super::*;
+    use crate::replay::offline;
+
+    fn usher() -> SpotifyMeta {
+        SpotifyMeta {
+            kind: SpotifyKind::Track,
+            title: "Yeah! (feat. Lil Jon & Ludacris)".into(),
+            artists: vec!["USHER".into(), "Lil Jon".into(), "Ludacris".into()],
+            duration_ms: Some(250_373),
+            explicit: Some(false),
+            track_count: None,
+        }
+    }
+
+    /// The recorded search (`apple_music_track_usher`) also has the song on two
+    /// "Various Artists" compilations and a 20th anniversary edition.
+    #[test]
+    fn picks_the_original_album_from_recorded_results() {
+        let (http, _) = offline("apple_music_track_usher");
+        let found = find(&http, &usher(), "SE", false).unwrap().unwrap();
+        assert!(
+            found.urls.web_url.ends_with("?i=386153478"),
+            "{}",
+            found.urls.web_url
+        );
+        assert_eq!(
+            found.album.as_deref(),
+            Some("Confessions (Expanded Edition)")
+        );
+        assert_eq!(found.album_artist.as_deref(), Some("USHER"));
+        assert!(found.artist_urls.is_none());
+    }
+
+    #[test]
+    fn recognizes_compilations() {
+        let (http, _) = offline("apple_music_track_usher");
+        let results = search(&http, &usher(), "song", "SE").unwrap();
+        let compilations: Vec<&str> = results
+            .iter()
+            .filter(|i| i.is_compilation())
+            .filter_map(|i| i.collection_name.as_deref())
+            .collect();
+        assert!(
+            compilations.contains(&"Pop Internacional 2023"),
+            "{compilations:?}"
+        );
+        assert!(compilations.contains(&"Touch My Soul"), "{compilations:?}");
+    }
+
+    #[test]
+    fn reads_explicitness() {
+        assert_eq!(is_explicit(Some("explicit")), Some(true));
+        assert_eq!(is_explicit(Some("cleaned")), Some(false));
+        assert_eq!(is_explicit(Some("notExplicit")), Some(false));
+        assert_eq!(is_explicit(Some("unknown")), None);
+        assert_eq!(is_explicit(None), None);
+    }
+
+    /// Results without a link can't be opened, so they never win.
+    #[test]
+    fn ignores_results_without_a_link() {
+        let (http, _) = crate::replay::replaying(crate::replay::Replay::new().with(
+            crate::replay::Exchange::json(
+                "GET https://itunes.apple.com/search",
+                serde_json::json!({"results": [{
+                    "trackName": "Yeah! (feat. Lil Jon & Ludacris)",
+                    "artistName": "USHER",
+                    "collectionName": "Confessions",
+                    "trackTimeMillis": 250373
+                }]}),
+            ),
+        ));
+        assert!(find(&http, &usher(), "SE", false).unwrap().is_none());
     }
 }

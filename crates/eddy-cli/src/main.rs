@@ -179,3 +179,17 @@ fn parse_duration(value: &str) -> Option<u64> {
         })
         .map(|seconds| seconds * 1000)
 }
+
+#[cfg(test)]
+mod tests {
+    use super::*;
+
+    #[test]
+    fn parses_durations() {
+        assert_eq!(parse_duration("4:10"), Some(250_000));
+        assert_eq!(parse_duration("1:02:03"), Some(3_723_000));
+        assert_eq!(parse_duration("45"), Some(45_000));
+        assert_eq!(parse_duration("4:1x"), None);
+        assert_eq!(parse_duration(""), None);
+    }
+}

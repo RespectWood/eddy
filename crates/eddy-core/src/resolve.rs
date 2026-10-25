@@ -67,13 +67,23 @@ pub struct Resolver {
 
 impl Resolver {
     pub fn new(config: ResolverConfig) -> Self {
+        // Test builds of the CLI answer from a cassette (see `replay.rs`).
+        #[cfg(feature = "test-support")]
+        if let Some(path) = std::env::var_os("EDDY_REPLAY") {
+            let replay = crate::replay::Replay::from_file(std::path::Path::new(&path));
+            return Self::with_http(config, Http::replay(std::sync::Arc::new(replay)));
+        }
+        Self::with_http(config, Http::new())
+    }
+
+    pub(crate) fn with_http(config: ResolverConfig, http: Http) -> Self {
         // A broken cache shouldn't stop conversions, so open errors disable it.
         let cache = config
             .cache_path
             .and_then(|p| Cache::open(&p).ok())
             .map(Mutex::new);
         Self {
-            http: Http::new(),
+            http,
             cache,
             tidal: config.tidal.map(Tidal::new),
             explain: config.explain,
@@ -250,6 +260,7 @@ pub(crate) fn normalize_country(country: &str) -> String {
 #[cfg(test)]
 mod tests {
     use super::*;
+    use crate::replay::live;
 
     #[test]
     fn normalizes_country() {
@@ -284,7 +295,10 @@ mod tests {
     #[test]
     #[ignore]
     fn live_apple_music_track() {
-        let resolver = Resolver::new(ResolverConfig::default());
+        let resolver = Resolver::with_http(
+            ResolverConfig::default(),
+            live("apple_music_track_rick_astley"),
+        );
         let c = resolver
             .resolve(
                 "https://open.spotify.com/track/4uLU6hMCjMI75M1A2tKUQC?si=x",
@@ -300,10 +314,82 @@ mod tests {
         );
     }
 
+    /// "– Remastered 2011" on Spotify, without the suffix on Apple Music.
+    #[test]
+    #[ignore]
+    fn live_apple_music_remastered_title() {
+        let resolver = Resolver::with_http(
+            ResolverConfig::default(),
+            live("apple_music_track_remastered"),
+        );
+        let c = resolver
+            .resolve(
+                "https://open.spotify.com/track/7tFiyTwD0nx5a1eklYtX2J",
+                Service::AppleMusic,
+                "US",
+            )
+            .unwrap();
+        assert!(c.title.contains("Bohemian Rhapsody"), "{c:?}");
+    }
+
+    /// An explicit Spotify track: Apple Music also has the clean version.
+    #[test]
+    #[ignore]
+    fn live_apple_music_explicit_track() {
+        let resolver = Resolver::with_http(
+            ResolverConfig::default(),
+            live("apple_music_track_explicit"),
+        );
+        let c = resolver
+            .resolve(
+                "https://open.spotify.com/track/7KXjTSCq5nL1LoYtL7XAwS",
+                Service::AppleMusic,
+                "US",
+            )
+            .unwrap();
+        assert!(c.native_url.contains("?i="), "{}", c.native_url);
+    }
+
+    /// Spotify metadata, Deezer and iTunes for USHER – Yeah!, the song the TIDAL
+    /// cassettes are built around.
+    #[test]
+    #[ignore]
+    fn live_apple_music_usher() {
+        let http = live("apple_music_track_usher");
+        let resolver = Resolver::with_http(ResolverConfig::default(), http.clone());
+        let c = resolver
+            .resolve(
+                "https://open.spotify.com/track/5rb9QrpfcKFHM1EUbSIurX",
+                Service::AppleMusic,
+                "SE",
+            )
+            .unwrap();
+        assert!(
+            c.album
+                .as_deref()
+                .unwrap_or_default()
+                .contains("Confessions"),
+            "{c:?}"
+        );
+        let meta = crate::spotify::fetch(
+            &http,
+            &SpotifyLink {
+                kind: SpotifyKind::Track,
+                id: "5rb9QrpfcKFHM1EUbSIurX".into(),
+            },
+        )
+        .unwrap()
+        .unwrap();
+        assert!(deezer::find_code(&http, &meta).unwrap().is_some());
+    }
+
     #[test]
     #[ignore]
     fn live_apple_music_album() {
-        let resolver = Resolver::new(ResolverConfig::default());
+        let resolver = Resolver::with_http(
+            ResolverConfig::default(),
+            live("apple_music_album_dark_side"),
+        );
         let c = resolver
             .resolve(
                 "https://open.spotify.com/album/4LH4d3cOWNNsVw41Gqt2kv",
@@ -336,10 +422,13 @@ mod tests {
         } else {
             &[Service::AppleMusic]
         };
-        let resolver = Resolver::new(ResolverConfig {
-            tidal,
-            ..Default::default()
-        });
+        let resolver = Resolver::with_http(
+            ResolverConfig {
+                tidal,
+                ..Default::default()
+            },
+            live("original_releases"),
+        );
         let tracks = include_str!("../tests/fixtures/original_releases.txt");
         let mut failures = Vec::new();
         for line in tracks
@@ -364,10 +453,43 @@ mod tests {
         assert!(failures.is_empty(), "{failures:#?}");
     }
 
+    /// Re-records `tidal_usher_resolve`, the cassette of the offline TIDAL tests.
+    /// Needs `TIDAL_CLIENT_ID` / `TIDAL_CLIENT_SECRET`.
+    #[test]
+    #[ignore]
+    fn live_tidal_usher() {
+        let (Ok(client_id), Ok(client_secret)) = (
+            std::env::var("TIDAL_CLIENT_ID"),
+            std::env::var("TIDAL_CLIENT_SECRET"),
+        ) else {
+            eprintln!("skipped: TIDAL_CLIENT_ID / TIDAL_CLIENT_SECRET not set");
+            return;
+        };
+        let resolver = Resolver::with_http(
+            ResolverConfig {
+                tidal: Some(TidalAuth::ClientCredentials(crate::TidalCredentials {
+                    client_id,
+                    client_secret,
+                })),
+                ..Default::default()
+            },
+            live("tidal_usher_resolve"),
+        );
+        let c = resolver
+            .resolve(
+                "https://open.spotify.com/track/5rb9QrpfcKFHM1EUbSIurX",
+                Service::Tidal,
+                "SE",
+            )
+            .unwrap();
+        assert_eq!(c.native_url, "tidal://track/11337915");
+    }
+
     #[test]
     #[ignore]
     fn live_tidal_without_credentials_falls_back_to_search() {
-        let resolver = Resolver::new(ResolverConfig::default());
+        let resolver =
+            Resolver::with_http(ResolverConfig::default(), live("tidal_without_credentials"));
         let err = resolver
             .resolve(
                 "https://open.spotify.com/track/4uLU6hMCjMI75M1A2tKUQC",

@@ -1,0 +1,38 @@
+name: Live tests
+
+# The `#[ignore]` tests, against the real Spotify, iTunes, Deezer, MusicBrainz and
+# TIDAL. They catch API changes that the offline tests (recorded responses) can't.
+# A failure usually means a service changed: re-record the cassettes
+# (`EDDY_RECORD=1 cargo test -p eddy-core -- --ignored`), fix, or open a ticket.
+on:
+  schedule:
+    - cron: "17 6 * * 1" # Mondays, 06:17 UTC
+  workflow_dispatch:
+
+# Least privilege: the job only reads the repository.
+permissions:
+  contents: read
+
+concurrency: live-tests
+
+jobs:
+  live:
+    # Scheduled and manual runs use the default branch only; there is no pull_request
+    # trigger, so the TIDAL secret never reaches code from a pull request.
+    if: github.repository == 'RespectWood/eddy'
+    runs-on: macos-latest
+    env:
+      TIDAL_CLIENT_ID: ${{ secrets.TIDAL_CLIENT_ID }}
+      TIDAL_CLIENT_SECRET: ${{ secrets.TIDAL_CLIENT_SECRET }}
+    steps:
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+      - run: rustup show
+      - uses: Swatinem/rust-cache@d1527c8f67ef9af357290475d4af4b0fab8f12e0 # v2
+      - name: Warn when the TIDAL tests will be skipped
+        run: |
+          if [[ -z "$TIDAL_CLIENT_ID" || -z "$TIDAL_CLIENT_SECRET" ]]; then
+            echo "::warning::TIDAL_CLIENT_ID / TIDAL_CLIENT_SECRET secrets not set: TIDAL live tests skip themselves"
+          fi
+      # One at a time: MusicBrainz allows one request per second, and TIDAL's rate
+      # limit is shared by every eddy user.
+      - run: cargo test -p eddy-core -- --ignored --test-threads=1
