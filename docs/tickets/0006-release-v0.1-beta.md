@@ -41,9 +41,9 @@ Turn what's on `main` into a **tagged pre-release** that testers can install: ma
 
 ### 3. Make the repository public
 - [ ] Read through the README once more (it's the landing page).
-- [ ] GitHub → Settings → Security: turn on **Private vulnerability reporting** (`SECURITY.md` points there).
-- [ ] Branch ruleset for `main`: block force pushes, restrict deletions.
-- [ ] Switch the repository to public. The privacy link in eddy's settings (`github.com/RespectWood/eddy#privacy`) only works from then on.
+- [x] GitHub → Settings → Security: turn on **Private vulnerability reporting** (`SECURITY.md` points there).
+- [x] Branch ruleset for `main`: block force pushes, restrict deletions ("Protect main", 2026-10-25).
+- [x] Switch the repository to public (2026-10-25, after rewriting the history to the noreply address and recreating the repo). The privacy link in eddy's settings (`github.com/RespectWood/eddy#privacy`) only works from then on.
 
 ### 3a. TIDAL (Developer Terms v3.0, see 0004)
 - [ ] **Q5:** a second TIDAL account (a friend) presses Connect on a release build. If it fails ("Request not allowed", sub_status 1005), the release notes say exact TIDAL matches only work for the developer for now; TIDAL search still works for everyone.
@@ -74,6 +74,6 @@ Turn what's on `main` into a **tagged pre-release** that testers can install: ma
 ## Acceptance criteria
 
 - [ ] Manual test results recorded; every failure fixed or ticketed.
-- [ ] Repository public, private vulnerability reporting on.
+- [x] Repository public, private vulnerability reporting on.
 - [x] `v0.1.0-beta.1` tag and GitHub pre-release with the zip and release notes.
 - [ ] CI green on the tagged commit.
