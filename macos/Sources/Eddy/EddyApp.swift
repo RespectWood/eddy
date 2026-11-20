@@ -56,15 +56,18 @@ final class AppDelegate: NSObject, NSApplicationDelegate {
 
     /// Local HTML files (Eddy is registered as a browser) go straight to the real browser.
     /// Other files (apps, scripts, …) are refused rather than handed to the browser.
-    func application(_ sender: NSApplication, openFile filename: String) -> Bool {
-        let url = URL(fileURLWithPath: filename)
-        guard let type = try? url.resourceValues(forKeys: [.contentTypeKey]).contentType,
-              Self.acceptedFileTypes.contains(where: type.conforms(to:)) else {
-            log.error("refused to open a file that isn't HTML")
-            return false
+    /// `open urls`, not `openFile`: SwiftUI's own app delegate implements this one, so AppKit
+    /// never calls `openFile`, and only this one is forwarded to the adaptor.
+    func application(_ application: NSApplication, open urls: [URL]) {
+        for url in urls {
+            guard url.isFileURL,
+                  let type = try? url.resourceValues(forKeys: [.contentTypeKey]).contentType,
+                  Self.acceptedFileTypes.contains(where: type.conforms(to:)) else {
+                log.error("refused to open a file that isn't HTML")
+                continue
+            }
+            model.handle(url)
         }
-        model.handle(url)
-        return true
     }
 
     /// Opening the app again (e.g. from Finder) shows settings instead of doing nothing.
